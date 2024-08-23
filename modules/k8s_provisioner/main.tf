@@ -64,7 +64,7 @@ resource "aws_instance" "control_plane" {
   subnet_id     = aws_subnet.k8s_subnet.id
 
   root_block_device {
-    volume_size = var.volume_cp_size
+    volume_size = var.volume_size
   }
 
   vpc_security_group_ids = [aws_security_group.this[0].id]
@@ -97,8 +97,8 @@ resource "aws_instance" "control_plane" {
       echo "[default]" | tee ~/.aws/config
       echo "aws_access_key_id=${var.AWS_ACCESS_KEY_ID}" | tee -a ~/.aws/config
       echo "aws_secret_access_key=${var.AWS_SECRET_ACCESS_KEY}" | tee -a ~/.aws/config
-      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
       sudo apt-get update
       sudo apt-get install -y kubelet kubeadm kubectl
       sudo apt-mark hold kubelet kubeadm kubectl
@@ -121,13 +121,8 @@ resource "aws_instance" "control_plane" {
       #####################################################################
       JOIN_COMMAND=$(kubeadm token create --print-join-command)
       aws ssm put-parameter --name "k8s_join_command" --value "$JOIN_COMMAND" --type "SecureString" --overwrite
-      ################ CRIANDO O NFS ######################
-      sudo mkdir /mnt/nfs
-      sudo chown $(id -u):$(id -g) /mnt/nfs
-      cat <<EOF2 | sudo tee /etc/exports
-      /mnt/nfs   ${var.k8s_subnet_cidr}(rw,sync,no_root_squash,no_subtree_check)
-      EOF2
-      sudo exportfs -ar
+      KUBECONFIG_FILE=$(cat ~/.kube/config)
+      aws ssm put-parameter --name "k8s_kubeconfig" --value "$KUBECONFIG_FILE" --type "SecureString" --tier Advanced --overwrite
       #WeaveNet
       kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
       EOF
@@ -180,10 +175,28 @@ resource "aws_lb_target_group_attachment" "k8s_tg_attachment" {
   port             = 80
 }
 
-resource "aws_lb_listener" "k8s_listener" {
+resource "aws_lb_listener" "k8s_listener_http" {
   load_balancer_arn = aws_lb.k8s_alb.arn
   port              = 80
   protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "k8s_listener_https" {
+  load_balancer_arn = aws_lb.k8s_alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:acm:us-east-1:381492273741:certificate/48066b99-9cc7-46f1-9e08-31aaeeb1a735"
 
   default_action {
     type             = "forward"
@@ -199,7 +212,7 @@ resource "aws_instance" "worker" {
   subnet_id     = aws_subnet.k8s_subnet.id
 
   root_block_device {
-    volume_size = var.volume_workers_size
+    volume_size = var.volume_size
   }
 
   vpc_security_group_ids = [aws_security_group.this[count.index + 1].id]
@@ -232,8 +245,8 @@ resource "aws_instance" "worker" {
       echo "[default]" | tee ~/.aws/config
       echo "aws_access_key_id=${var.AWS_ACCESS_KEY_ID}" | tee -a ~/.aws/config
       echo "aws_secret_access_key=${var.AWS_SECRET_ACCESS_KEY}" | tee -a ~/.aws/config
-      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+      curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
       sudo apt-get update
       sudo apt-get install -y kubelet kubeadm kubectl
       sudo apt-mark hold kubelet kubeadm kubectl
@@ -252,23 +265,13 @@ resource "aws_instance" "worker" {
       #####################################################################
       JOIN_COMMAND=$(aws ssm get-parameter --name "k8s_join_command" --query "Parameter.Value" --with-decryption --output text)
       sudo $JOIN_COMMAND
-      ################ MONTANDO O NFS ######################
-      sudo mkdir /mnt/nfs
-      sudo chown $(id -u):$(id -g) /mnt/nfs
-      sudo mount ${aws_instance.control_plane.private_ip}:/mnt/nfs /mnt/nfs
       ################# INSTALANDO AS FERRAMENTAS QUE IREI UTILIZAR #######################
       if [ "$(hostname)" = "PICK-worker-1" ]; then
+        mkdir ~/.kube
+        aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > ~/.kube/config
         #Ingress Controller
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml 
-        # Prometheus
-        git clone https://github.com/prometheus-operator/kube-prometheus
-        cd kube-prometheus
-        kubectl create -f manifests/setup
-        while kubectl get servicemonitors -A 2>&1 | grep -q "^error:"; do
-          echo "Waiting for ServiceMonitors to be available..."
-          sleep 5
-        done
-        kubectl apply -f manifests/
+        #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml 
+        kubectl apply -f https://raw.githubusercontent.com/FabioBartoli/LINUXtips-PICK/main/modules/k8s_provisioner/ingress-controller.yaml
         # Helm
         curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
         chmod 700 get_helm.sh
