@@ -1,7 +1,6 @@
 variable "ami" {}
 variable "instance_type" {}
-variable "volume_cp_size" {}
-variable "volume_workers_size" {}
+variable "volume_size" {}
 variable "instance_count" {}
 variable "vpc_id" {}
 variable "k8s_subnet_cidr" {}
