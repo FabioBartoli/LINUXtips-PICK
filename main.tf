@@ -4,6 +4,9 @@ variable "secret_key" {}
 variable "k8s_subnet_cidr" {
   default = "172.31.112.0/20" // Altere esse valor para o correspondente com sua VPC
 }
+variable "k8s_subnet_cidr_2" {
+  default = "172.31.128.0/20" // Altere esse valor para o correspondente com sua VPC
+}
 
 provider "aws" {
   region     = "us-east-1"
@@ -29,7 +32,9 @@ module "k8s_provisioner" {
   instance_count        = 3                       // Número de instâncias
   vpc_id                = "vpc-096357cb7db323b17" // ID da sua VPC
   k8s_subnet_cidr       = var.k8s_subnet_cidr
+  k8s_subnet_cidr_2     = var.k8s_subnet_cidr_2
   k8s_subnet_az         = "us-east-1a" // AZ para a subnet que será criada
+  k8s_subnet_az_2       = "us-east-1b" // AZ para a subnet secundário para o Balancer
   AWS_ACCESS_KEY_ID     = var.access_key
   AWS_SECRET_ACCESS_KEY = var.secret_key
   private_key           = file("${path.module}/id_rsa")

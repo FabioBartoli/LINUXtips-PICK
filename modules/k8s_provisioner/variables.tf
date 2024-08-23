@@ -5,7 +5,9 @@ variable "volume_workers_size" {}
 variable "instance_count" {}
 variable "vpc_id" {}
 variable "k8s_subnet_cidr" {}
+variable "k8s_subnet_cidr_2" {}
 variable "k8s_subnet_az" {}
+variable "k8s_subnet_az_2" {}
 variable "AWS_ACCESS_KEY_ID" {}
 variable "AWS_SECRET_ACCESS_KEY" {}
 variable "private_key" {}

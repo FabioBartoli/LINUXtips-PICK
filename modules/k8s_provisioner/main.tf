@@ -45,6 +45,18 @@ resource "aws_subnet" "k8s_subnet" {
   }
 }
 
+resource "aws_subnet" "k8s_subnet_2" {
+  vpc_id            = var.vpc_id
+  cidr_block        = var.k8s_subnet_cidr_2
+  availability_zone = var.k8s_subnet_az_2
+
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "PICK-K8S-Subnet-2"
+  }
+}
+
 resource "aws_instance" "control_plane" {
   ami           = var.ami
   instance_type = var.instance_type
@@ -116,28 +128,8 @@ resource "aws_instance" "control_plane" {
       /mnt/nfs   ${var.k8s_subnet_cidr}(rw,sync,no_root_squash,no_subtree_check)
       EOF2
       sudo exportfs -ar
-      ################# INSTALANDO AS FERRAMENTAS QUE IREI UTILIZAR #######################
       #WeaveNet
       kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
-      #Ingress Controller
-      kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml 
-      # Prometheus
-      git clone https://github.com/prometheus-operator/kube-prometheus
-      cd kube-prometheus
-      kubectl create -f manifests/setup
-      while kubectl get servicemonitors -A 2>&1 | grep -q "^error:"; do
-        echo "Waiting for ServiceMonitors to be available..."
-        sleep 5
-      done
-      kubectl apply -f manifests/
-      # Helm
-      curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-      chmod 700 get_helm.sh
-      ./get_helm.sh
-      # Kyverno
-      helm repo add kyverno https://kyverno.github.io/kyverno/
-      helm repo update
-      helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
       EOF
     ]
 
@@ -155,7 +147,7 @@ resource "aws_lb" "k8s_alb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.this[0].id]
-  subnets            = [aws_subnet.k8s_subnet.id]
+  subnets            = [aws_subnet.k8s_subnet.id, aws_subnet.k8s_subnet_2.id]
 
   enable_deletion_protection = false
   idle_timeout               = 60
@@ -264,10 +256,30 @@ resource "aws_instance" "worker" {
       sudo mkdir /mnt/nfs
       sudo chown $(id -u):$(id -g) /mnt/nfs
       sudo mount ${aws_instance.control_plane.private_ip}:/mnt/nfs /mnt/nfs
-      ######################################################
+      ################# INSTALANDO AS FERRAMENTAS QUE IREI UTILIZAR #######################
+      if [ "$(hostname)" = "PICK-worker-1" ]; then
+        #Ingress Controller
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml 
+        # Prometheus
+        git clone https://github.com/prometheus-operator/kube-prometheus
+        cd kube-prometheus
+        kubectl create -f manifests/setup
+        while kubectl get servicemonitors -A 2>&1 | grep -q "^error:"; do
+          echo "Waiting for ServiceMonitors to be available..."
+          sleep 5
+        done
+        kubectl apply -f manifests/
+        # Helm
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+        # Kyverno
+        helm repo add kyverno https://kyverno.github.io/kyverno/
+        helm repo update
+        helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
+      fi
       EOF
     ]
-
     connection {
       type        = "ssh"
       host        = self.public_ip
@@ -275,6 +287,5 @@ resource "aws_instance" "worker" {
       private_key = var.private_key
     }
   }
-
   depends_on = [aws_instance.control_plane]
 }
