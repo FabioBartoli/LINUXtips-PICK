@@ -1,0 +1,63 @@
+name: CRIA INFRA - K8S
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Escolha uma ação'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
+
+env:
+  TF_VAR_access_key: ${{ secrets.ACCESS_KEY }}
+  TF_VAR_secret_key: ${{ secrets.SECRET_KEY }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_KEY }}
+  AWS_REGION: "us-east-1"
+
+jobs:
+  k8s-provisioner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Loading Credentials
+        run: |
+          echo "${{ secrets.PUBLIC_KEY }}" > id_rsa.pub
+          echo "${{ secrets.PRIVATE_KEY }}" > id_rsa
+          chmod 600 id_rsa
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Apply or Destroy
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "apply" ]; then
+            terraform apply --auto-approve
+            aws ssm delete-parameter --name "k8s_join_command"
+          elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy --auto-approve
+          else
+            echo "Invalid action: ${{ github.event.inputs.action }}"
+            exit 1
+          fi
+
+      - name: Print Terraform Outputs
+        if: steps.terraform-apply-or-destroy.outcome != 'failure' && github.event.inputs.action == 'apply'
+        run: |
+          echo "Control Plane Public IP:"
+          terraform output control_plane_public_ip
+          echo "Worker Public IPs:"
+          terraform output worker_public_ips
