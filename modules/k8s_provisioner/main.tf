@@ -152,9 +152,9 @@ resource "aws_lb" "k8s_alb" {
   }
 }
 
-resource "aws_lb_target_group" "k8s_tg" {
-  name        = "k8s-control-plane-tg"
-  port        = 80
+resource "aws_lb_target_group" "k8s_tg_http" {
+  name        = "k8s-control-plane-tg-http"
+  port        = 30080
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
   target_type = "instance"
@@ -169,10 +169,33 @@ resource "aws_lb_target_group" "k8s_tg" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "k8s_tg_attachment" {
-  target_group_arn = aws_lb_target_group.k8s_tg.arn
+resource "aws_lb_target_group" "k8s_tg_https" {
+  name        = "k8s-control-plane-tg-https"
+  port        = 30443
+  protocol    = "HTTPS"
+  vpc_id      = var.vpc_id
+  target_type = "instance"
+
+  health_check {
+    path                = "/healthz"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200"
+  }
+}
+
+resource "aws_lb_target_group_attachment" "k8s_tg_attachment_http" {
+  target_group_arn = aws_lb_target_group.k8s_tg_http.arn
   target_id        = aws_instance.control_plane.id
-  port             = 80
+  port             = 30080
+}
+
+resource "aws_lb_target_group_attachment" "k8s_tg_attachment_https" {
+  target_group_arn = aws_lb_target_group.k8s_tg_https.arn
+  target_id        = aws_instance.control_plane.id
+  port             = 30443
 }
 
 resource "aws_lb_listener" "k8s_listener_http" {
@@ -181,13 +204,8 @@ resource "aws_lb_listener" "k8s_listener_http" {
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.k8s_tg_http.arn
   }
 }
 
@@ -200,7 +218,7 @@ resource "aws_lb_listener" "k8s_listener_https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.k8s_tg.arn
+    target_group_arn = aws_lb_target_group.k8s_tg_https.arn
   }
 }
 
@@ -270,8 +288,8 @@ resource "aws_instance" "worker" {
         mkdir ~/.kube
         aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > ~/.kube/config
         #Ingress Controller
-        #kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml 
-        kubectl apply -f https://raw.githubusercontent.com/FabioBartoli/LINUXtips-PICK/main/modules/k8s_provisioner/ingress-controller.yaml
+        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml 
+        kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
         # Helm
         curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
         chmod 700 get_helm.sh
