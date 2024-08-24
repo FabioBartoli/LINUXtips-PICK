@@ -1,4 +1,5 @@
 variable "ami" {}
+variable "cp_instance_type" {}
 variable "instance_type" {}
 variable "volume_size" {}
 variable "instance_count" {}

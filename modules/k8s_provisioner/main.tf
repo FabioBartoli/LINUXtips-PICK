@@ -59,7 +59,7 @@ resource "aws_subnet" "k8s_subnet_2" {
 
 resource "aws_instance" "control_plane" {
   ami           = var.ami
-  instance_type = var.instance_type
+  instance_type = var.cp_instance_type
   key_name      = aws_key_pair.k8s_key.key_name
   subnet_id     = aws_subnet.k8s_subnet.id
 
