@@ -239,6 +239,11 @@ resource "aws_instance" "worker" {
     Name = "PICK-K8S-Worker-${count.index + 1}"
   }
 
+  provisioner "file" {
+    source      = "ingress-deploy.yaml"
+    destination = "/home/ubuntu/ingress-deploy.yaml"
+  }
+
   provisioner "remote-exec" {
     inline = [
       <<-EOF
@@ -288,7 +293,7 @@ resource "aws_instance" "worker" {
         mkdir ~/.kube
         aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > ~/.kube/config
         #Ingress Controller
-        kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml 
+        kubectl apply -f ingress-deploy.yaml 
         kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
         # Helm
         curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
