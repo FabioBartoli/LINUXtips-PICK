@@ -23,12 +23,13 @@ terraform {
 }
 
 module "k8s_provisioner" {
-  source        = "./modules/k8s_provisioner"
-  ami           = "ami-04b70fa74e45c3917" // Ubuntu Server 24.04 LTS (HVM), SSD Volume Type
-  instance_type = "t2.micro"   // A recomendação para k8s é 2vCPU x 2GiB RAM, a mais barata seria uma t3a.small
-                              // Como é apenas para testes, estou criando uma t2.micro por ser grátis no "free tier"
-  volume_size   = 8
-  instance_count        = 3                       // Número de instâncias
+  source           = "./modules/k8s_provisioner"
+  ami              = "ami-04b70fa74e45c3917" // Ubuntu Server 24.04 LTS (HVM), SSD Volume Type
+  cp_instance_type = "t3a.small"
+  instance_type    = "t2.micro" // A recomendação para k8s é 2vCPU x 2GiB RAM, a mais barata seria uma t3a.small
+  // Como é apenas para testes, estou criando os workers como t2.micro por ser grátis no "free tier"
+  volume_size           = 8
+  instance_count        = 4                       // Número de instâncias
   vpc_id                = "vpc-096357cb7db323b17" // ID da sua VPC
   k8s_subnet_cidr       = var.k8s_subnet_cidr
   k8s_subnet_cidr_2     = var.k8s_subnet_cidr_2
