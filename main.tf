@@ -25,7 +25,7 @@ terraform {
 module "k8s_provisioner" {
   source           = "./modules/k8s_provisioner"
   ami              = "ami-04b70fa74e45c3917" // Ubuntu Server 24.04 LTS (HVM), SSD Volume Type
-  cp_instance_type = "t2.micro" // 1vCPU x 1Gib Memory
+  cp_instance_type = "t3a.small" // 2vCPU x 2Gib Memory
   instance_type    = "t3a.small" // 2vCPU x 2Gib Memory
   volume_size           = 8
   instance_count        = 4                       // Número de instâncias

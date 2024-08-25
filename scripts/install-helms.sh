@@ -11,7 +11,7 @@ kubectl config set-context --current --namespace=default
 helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
 #### Instalando o Locust
 sudo mkdir -p /usr/src/app/scripts/
-sudo mv ./LINUXtips-PICK/manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py
-kubectl apply -f ./LINUXtips-PICK/manifests/locust/
+sudo mv ../manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py
+kubectl apply -f ../manifests/locust/
 ###### Instalando os Ingress
-kubectl apply -f ./LINUXtips-PICK/manifests/ingress/
+kubectl apply -f ../manifests/ingress/
