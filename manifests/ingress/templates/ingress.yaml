@@ -31,4 +31,5 @@ spec:
         {{- end }}
       secretName: {{ $ingress.tls.secretName }}
   {{- end }}
+---
 {{- end }}

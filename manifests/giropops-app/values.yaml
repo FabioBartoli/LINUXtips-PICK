@@ -1,0 +1,78 @@
+deployments:
+  - name: giropops-senhas
+    namespace: giropops
+    replicas: 2
+    serviceAccountName: giropops-senhas-sa
+    labels:
+      app: giropops-senhas
+    containers:
+      - name: giropops-senhas
+        image: linuxtips/giropops-senhas:1.0
+        ports:
+          - containerPort: 5000
+        env:
+          - name: REDIS_HOST
+            value: redis-service
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+
+  - name: redis-deployment
+    namespace: giropops
+    replicas: 1
+    serviceAccountName: redis-sa
+    labels:
+      app: redis
+    containers:
+      - name: redis
+        image: redis
+        ports:
+          - containerPort: 6379
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+
+services:
+  - name: giropops-senhas
+    namespace: giropops
+    selector:
+      app: giropops-senhas
+    ports:
+      - protocol: TCP
+        port: 5000
+        targetPort: 5000
+        name: tcp-app
+
+  - name: redis-service
+    namespace: giropops
+    selector:
+      app: redis
+    ports:
+      - protocol: TCP
+        port: 6379
+        targetPort: 6379
+
+serviceAccounts:
+  - name: giropops-senhas-sa
+    namespace: giropops
+
+  - name: redis-sa
+    namespace: giropops
