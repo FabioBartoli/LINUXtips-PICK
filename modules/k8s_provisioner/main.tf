@@ -311,11 +311,11 @@ resource "aws_instance" "worker" {
         kubectl config set-context --current --namespace=default
         helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
         ###### Instalando os Ingress
-        k apply -f ./LINUXtips-PICK/manifests/ingress/
+        kubectl apply -f ./LINUXtips-PICK/manifests/ingress/
         #### Locust
         sudo mkdir -p /usr/src/app/scripts/
-        mv ./LINUXtips-PICK/manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py
-        k apply -f ./LINUXtips-PICK/manifests/locust/
+        sudo mv ./LINUXtips-PICK/manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py
+        kubectl apply -f ./LINUXtips-PICK/manifests/locust/
       fi
       EOF
     ]
