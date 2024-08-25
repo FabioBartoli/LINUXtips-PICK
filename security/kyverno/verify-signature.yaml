@@ -4,8 +4,6 @@ metadata:
   name: check-image
 spec:
   validationFailureAction: Enforce
-  background: false
-  webhookTimeoutSeconds: 30
   failurePolicy: Fail
   rules:
     - name: check-image
@@ -14,6 +12,16 @@ spec:
         - resources:
             kinds:
               - Pod
+      exclude:
+        resources:
+          namespaces:
+          - harbor
+          - ingress-nginx
+          - kube-system
+          - kyverno
+          - monitoring
+          - locust
+
       verifyImages:
       - imageReferences:
         - "harbor.fabiobartoli.com.br/*"
