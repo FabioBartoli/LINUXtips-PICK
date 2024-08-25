@@ -46,6 +46,12 @@ spec:
                 {{- range $capability := $container.securityContext.capabilities.drop }}
                 - {{ $capability }}
                 {{- end }}
+              {{- if $container.securityContext.capabilities.add }}
+              add:
+                {{- range $capability := $container.securityContext.capabilities.add }}
+                - {{ $capability }}
+                {{- end }}
+              {{- end }}
         {{- end }}
 ---
 {{- end }}

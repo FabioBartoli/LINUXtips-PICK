@@ -1,0 +1,74 @@
+name: BUILDA IMAGEM
+
+on:
+  workflow_dispatch:
+
+jobs:
+  set-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ env.environment }}
+    steps:
+      - name: Set environment
+        id: set-environment
+        run: |
+          # Set Environment
+          echo "BRANCH RECEBIDA: $GITHUB_REF_NAME"
+          case "$GITHUB_REF_NAME" in
+            "main")
+              echo "environment=prd" >> $GITHUB_ENV ;;
+            "stg")
+              echo "environment=stg" >> $GITHUB_ENV ;;
+            *)
+              echo "environment=dev" >> $GITHUB_ENV ;;
+          esac
+
+  sign-docker-image:
+    name: Sign Docker Image
+    runs-on: ubuntu-20.04
+    needs: set-environment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Import Certificates
+        run: |
+          echo "${{ secrets.COSIGN_KEY }}" | base64 -d > ${GITHUB_WORKSPACE}/app/melange-giropops-senhas/cosign.key
+          echo "${{ secrets.MELANGE_KEY }}" | base64 -d > ${GITHUB_WORKSPACE}/app/melange-giropops-senhas/melange.rsa
+          echo "${{ secrets.MELANGE_PUB }}" | base64 -d > ${GITHUB_WORKSPACE}/app/melange-giropops-senhas/melange.rsa.pub
+
+      - name: Build Docker image
+        run: |
+          cd ${GITHUB_WORKSPACE}/app/melange-giropops-senhas/
+          ls -lha
+          cp ${GITHUB_WORKSPACE}/security/melange/melange.yaml ${GITHUB_WORKSPACE}/security/melange/apko.yaml . 
+          docker run --rm --privileged -v "${PWD}":/work -w /work \
+            cgr.dev/chainguard/melange build melange.yaml \
+              --arch host \
+              --signing-key melange.rsa
+
+          docker run --rm -v "$PWD":/work -w /work \
+            cgr.dev/chainguard/apko build apko.yaml \
+              harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} \
+              giropops-senhas.tar -k melange.rsa.pub --arch host \
+              
+          docker load < giropops-senhas.tar
+
+      - name: Login to Harbor
+        run: |
+          docker login -u fabiobartoli https://harbor.fabiobartoli.com.br/ -p ${{ secrets.HARBOR_PASS }}
+
+      - name: Install Cosign
+        run: |
+          curl -sL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 --output cosign
+          chmod +x cosign
+          sudo mv cosign /usr/local/bin/cosign
+
+      - name: Tag, Sign and Push image
+        run: |
+          cosign sign --key cosign.key harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} --yes
+          docker tag harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} harbor.fabiobartoli.com.br/pick2024/giropops-senhas:latest
+          docker tag harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} harbor.fabiobartoli.com.br/pick2024/giropops-senhas::${{ GITHUB.SHA }}
+          docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }}
+          docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas::${{ GITHUB.SHA }}
+          docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas:latest

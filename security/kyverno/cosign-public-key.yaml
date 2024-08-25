@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cosign-public-key
+type: Opaque
+data:
+  cosign-public-key: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFR
+    Y0RRZ0FFak5odnN1Y2ZqNnZmV2VDZnFHY1h1RnEwMWV3YQorUWhFQVlCVmt3ZzFJQURNMkNZSWF0
+    VGlFSmlRRFNOSWVJaUI5TlV3ZlRKa2VuOXdrQU1xOE00WXhRPT0KLS0tLS1FTkQgUFVCTElDIEtF
+    WS0tLS0tCg====

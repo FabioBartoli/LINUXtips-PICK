@@ -1,6 +1,6 @@
 ingresses:
   - name: giropops-senhas
-    namespace: default
+    namespace: giropops
     ingressClassName: nginx
     host: giropops-senhas.fabiobartoli.com.br
     annotations:
