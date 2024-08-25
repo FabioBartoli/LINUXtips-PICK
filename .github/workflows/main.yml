@@ -46,9 +46,6 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.action }}" == "apply" ]; then
             terraform apply --auto-approve
-            aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > kubeconfig
-            public_ip=$(terraform output -raw control_plane_public_ip)
-            sed -i "s|\(server: https://\)[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\(:6443\)|\1$public_ip\2|" kubeconfig
             aws ssm delete-parameter --name "k8s_join_command" 
             aws ssm delete-parameter --name "k8s_kubeconfig"
           elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
@@ -57,13 +54,6 @@ jobs:
             echo "Invalid action: ${{ github.event.inputs.action }}"
             exit 1
           fi
-
-      - name: Upload Kubeconfig
-        if: github.event.inputs.action == 'apply'
-        uses: actions/upload-artifact@v4
-        with:
-          name: kubeconfig
-          path: kubeconfig
 
       - name: Print Terraform Outputs
         if: steps.terraform-apply-or-destroy.outcome != 'failure' && github.event.inputs.action == 'apply'
