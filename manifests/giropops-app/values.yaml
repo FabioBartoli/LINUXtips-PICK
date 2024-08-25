@@ -25,6 +25,25 @@ deployments:
           capabilities:
             drop:
               - ALL
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - -f
+            - http://localhost:5000/
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
 
   - name: redis-deployment
     namespace: giropops
@@ -54,7 +73,23 @@ deployments:
               - CHOWN
               - SETUID
               - SETGID
-
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 5
+          failureThreshold: 5
+          successThreshold: 1
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+          periodSeconds: 3
+        
 services:
   - name: giropops-senhas
     namespace: giropops

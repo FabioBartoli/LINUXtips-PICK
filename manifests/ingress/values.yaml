@@ -38,37 +38,33 @@ ingresses:
       - path: /api/
         pathType: Prefix
         service:
-          name: harbor-core
+          name: harbor-harbor-core
           port: 80
       - path: /service/
         pathType: Prefix
         service:
-          name: harbor-core
+          name: harbor-harbor-core
           port: 80
       - path: /v2/
         pathType: Prefix
         service:
-          name: harbor-core
+          name: harbor-harbor-core
           port: 80
       - path: /chartrepo/
         pathType: Prefix
         service:
-          name: harbor-core
+          name: harbor-harbor-core
           port: 80
       - path: /c/
         pathType: Prefix
         service:
-          name: harbor-core
+          name: harbor-harbor-core
           port: 80
       - path: /
         pathType: Prefix
         service:
-          name: harbor-portal
+          name: harbor-harbor-portal
           port: 80
-    tls:
-      hosts:
-        - harbor.fabiobartoli.com.br
-      secretName: harbor-ingress
 
   - name: locust-giropops
     namespace: locust

@@ -1,0 +1,40 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-harbor-signature
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - name: require-harbor-signature
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+              - Deployment
+      exclude:
+        resources:
+          namespaces:
+          - harbor
+          - ingress-nginx
+          - kube-system
+          - kyverno
+          - monitoring
+      verifyImages:
+      - imageReferences:
+        - "harbor.fabiobartoli.com.br*"
+        attestors:
+        - count: 1
+          entries:
+          - keys:
+              publicKeys: |-
+                -----BEGIN PUBLIC KEY-----
+                MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEjNhvsucfj6vfWeCfqGcXuFq01ewa
+                +QhEAYBVkwg1IADM2CYIatTiEJiQDSNIeIiB9NUwfTJken9wkAMq8M4YxQ==
+                -----END PUBLIC KEY-----           
+              rekor:
+                ignoreTlog: true
+                url: https://rekor.sigstore.dev

@@ -16,6 +16,5 @@ accounts:
   run-as: 65532
 environment: 
   FLASK_APP: "/usr/bin/giropops-senhas"
-  REDIS_HOST: 172.17.0.3
 entrypoint:
   command: /usr/bin/giropops-senhas

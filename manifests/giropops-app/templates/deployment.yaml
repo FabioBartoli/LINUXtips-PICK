@@ -52,6 +52,10 @@ spec:
                 - {{ $capability }}
                 {{- end }}
               {{- end }}
+          livenessProbe:
+            {{- toYaml $container.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml $container.readinessProbe | nindent 12 }}
         {{- end }}
 ---
 {{- end }}

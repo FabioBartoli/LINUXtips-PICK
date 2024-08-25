@@ -12,6 +12,14 @@ spec:
         - resources:
             kinds:
               - Pod
+      exclude:
+        resources:
+          namespaces:
+          - harbor
+          - ingress-nginx
+          - kube-system
+          - kyverno
+          - monitoring
       validate:
         message: "Não é permitido passar senhas como variáveis nesse Cluster! Use Secrets ao invés disso"
         pattern:
