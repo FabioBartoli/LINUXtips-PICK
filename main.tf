@@ -52,6 +52,12 @@ module "k8s_provisioner" {
       to_port     = 30443
       cidr_blocks = ["0.0.0.0/0"] //Acessar o Nodeport
     },
+    {
+      protocol    = "tcp"
+      from_port   = 22
+      to_port     = 22
+      cidr_blocks = ["0.0.0.0/0"] //SSH para o Terraform poder usar
+    },
     //LIBERA TODAS PORTAS PRA COMUNICAÇÃO ENTRE O CLUSTER
     {
       protocol    = "-1"
