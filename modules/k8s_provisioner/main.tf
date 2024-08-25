@@ -216,6 +216,10 @@ resource "aws_route53_record" "dns_records" {
     zone_id                = aws_lb.k8s_alb.zone_id
     evaluate_target_health = true
   }
+  
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_instance" "worker" {
