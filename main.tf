@@ -48,6 +48,18 @@ module "k8s_provisioner" {
     },
     {
       protocol    = "tcp"
+      from_port   = 80
+      to_port     = 80
+      cidr_blocks = ["0.0.0.0/0"] //Acessar o Kubeconfig remotamente
+    },
+    {
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      cidr_blocks = ["0.0.0.0/0"] //Acessar o Kubeconfig remotamente
+    },
+    {
+      protocol    = "tcp"
       from_port   = 30443
       to_port     = 30443
       cidr_blocks = ["0.0.0.0/0"] //Acessar o Nodeport

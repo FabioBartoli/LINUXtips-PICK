@@ -289,7 +289,7 @@ resource "aws_instance" "worker" {
         aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > ~/.kube/config
         #Ingress Controller
         git clone https://github.com/FabioBartoli/LINUXtips-PICK.git
-        kubectl apply --validate=false -f ./LINUXtips-PICK/main/modules/k8s_provisioner/ingress-deploy.yaml
+        kubectl apply --validate=false -f ./LINUXtips-PICK/modules/k8s_provisioner/ingress-deploy.yaml
         kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
         # Helm
         curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3

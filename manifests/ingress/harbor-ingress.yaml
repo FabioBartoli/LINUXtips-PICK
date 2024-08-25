@@ -21,7 +21,6 @@ metadata:
     heritage: Helm
     release: harbor
   name: harbor-ingress
-  namespace: default
   resourceVersion: "9480"
   uid: d6c4cf29-d9f4-4357-b551-b11971593307
 spec:

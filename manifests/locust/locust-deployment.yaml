@@ -3,8 +3,8 @@ kind: Deployment
 metadata:
   labels:
     app: locust-giropops
-    namespace: locust
   name: locust-giropops
+  namespace: locust
 spec:
   replicas: 1
   selector:
