@@ -25,9 +25,8 @@ terraform {
 module "k8s_provisioner" {
   source           = "./modules/k8s_provisioner"
   ami              = "ami-04b70fa74e45c3917" // Ubuntu Server 24.04 LTS (HVM), SSD Volume Type
-  cp_instance_type = "t3a.small"
-  instance_type    = "t2.micro" // A recomendação para k8s é 2vCPU x 2GiB RAM, a mais barata seria uma t3a.small
-  // Como é apenas para testes, estou criando os workers como t2.micro por ser grátis no "free tier"
+  cp_instance_type = "t2.micro" // 1vCPU x 1Gib Memory
+  instance_type    = "t3a.small" // 2vCPU x 2Gib Memory
   volume_size           = 8
   instance_count        = 4                       // Número de instâncias
   vpc_id                = "vpc-096357cb7db323b17" // ID da sua VPC
@@ -45,82 +44,21 @@ module "k8s_provisioner" {
       protocol    = "tcp"
       from_port   = 6443
       to_port     = 6443
-      cidr_blocks = ["0.0.0.0/0"]
+      cidr_blocks = ["0.0.0.0/0"] //Acessar o Kubeconfig remotamente
     },
     {
       protocol    = "tcp"
-      from_port   = 22
-      to_port     = 22
-      cidr_blocks = ["0.0.0.0/0"]
+      from_port   = 30443
+      to_port     = 30443
+      cidr_blocks = ["0.0.0.0/0"] //Acessar o Nodeport
     },
+    //LIBERA TODAS PORTAS PRA COMUNICAÇÃO ENTRE O CLUSTER
     {
-      protocol    = "tcp"
-      from_port   = 10250
-      to_port     = 10255
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      protocol    = "tcp"
-      from_port   = 30000
-      to_port     = 32767
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      protocol    = "tcp"
-      from_port   = 2379
-      to_port     = 2380
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      protocol    = "tcp"
-      from_port   = 6783
-      to_port     = 6783
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      protocol    = "udp"
-      from_port   = 6783
-      to_port     = 6784
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    //PORTAS NECESSÁRIAS PARA O NFS
-    {
-      protocol    = "tcp"
-      from_port   = 111
-      to_port     = 111
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
       cidr_blocks = [var.k8s_subnet_cidr]
-    },
-    {
-      protocol    = "tcp"
-      from_port   = 2049
-      to_port     = 2049
-      cidr_blocks = [var.k8s_subnet_cidr]
-    },
-    {
-      protocol    = "udp"
-      from_port   = 111
-      to_port     = 111
-      cidr_blocks = [var.k8s_subnet_cidr]
-    },
-    {
-      protocol    = "udp"
-      from_port   = 2049
-      to_port     = 2049
-      cidr_blocks = [var.k8s_subnet_cidr]
-    },
-    //PORTAS PARA COMUNICAÇÃO DO INGRESS
-    {
-      protocol    = "tcp"
-      from_port   = 443
-      to_port     = 443
-      cidr_blocks = ["0.0.0.0/0"]
-    },
-    {
-      protocol    = "tcp"
-      from_port   = 80
-      to_port     = 80
-      cidr_blocks = ["0.0.0.0/0"]
-    },
+    }
   ]
 }
 
@@ -130,4 +68,8 @@ output "control_plane_public_ip" {
 
 output "worker_public_ips" {
   value = module.k8s_provisioner.worker_public_ips
+}
+
+output "k8s_alb_dns_name" {
+  value = module.k8s_provisioner.k8s_alb_dns_name
 }

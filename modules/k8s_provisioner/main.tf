@@ -89,7 +89,7 @@ resource "aws_instance" "control_plane" {
       EOF2
       sudo sysctl --system
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      sudo apt-get update && sudo apt-get install -y systemd apt-transport-https ca-certificates curl gpg unzip nfs-kernel-server nfs-common bash-completion
+      sudo apt-get update && sudo apt-get install -y systemd apt-transport-https ca-certificates curl gpg unzip bash-completion
       sudo hostnamectl set-hostname PICK-control-plane
       unzip awscliv2.zip
       sudo ./aws/install
@@ -108,6 +108,7 @@ resource "aws_instance" "control_plane" {
       sudo apt-get update && sudo apt-get install -y containerd.io
       sudo containerd config default | sudo tee /etc/containerd/config.toml
       sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+      sudo sed -i 's/^KUBELET_EXTRA_ARGS=.*/KUBELET_EXTRA_ARGS=--max-pods=110/' /etc/default/kubelet
       sudo systemctl restart containerd
       sudo systemctl enable --now kubelet
       sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=${aws_instance.control_plane.private_ip} --ignore-preflight-errors=NumCPU,Mem
@@ -152,23 +153,6 @@ resource "aws_lb" "k8s_alb" {
   }
 }
 
-resource "aws_lb_target_group" "k8s_tg_http" {
-  name        = "k8s-control-plane-tg-http"
-  port        = 30080
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "instance"
-
-  health_check {
-    path                = "/healthz"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200"
-  }
-}
-
 resource "aws_lb_target_group" "k8s_tg_https" {
   name        = "k8s-control-plane-tg-https"
   port        = 30443
@@ -186,12 +170,6 @@ resource "aws_lb_target_group" "k8s_tg_https" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "k8s_tg_attachment_http" {
-  target_group_arn = aws_lb_target_group.k8s_tg_http.arn
-  target_id        = aws_instance.control_plane.id
-  port             = 30080
-}
-
 resource "aws_lb_target_group_attachment" "k8s_tg_attachment_https" {
   target_group_arn = aws_lb_target_group.k8s_tg_https.arn
   target_id        = aws_instance.control_plane.id
@@ -204,8 +182,13 @@ resource "aws_lb_listener" "k8s_listener_http" {
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.k8s_tg_http.arn
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
@@ -219,6 +202,19 @@ resource "aws_lb_listener" "k8s_listener_https" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.k8s_tg_https.arn
+  }
+}
+
+resource "aws_route53_record" "dns_records" {
+  for_each = toset(var.dns_names)
+  zone_id  = "Z0250850H44ROGORV6C9"
+  name     = each.value
+  type     = "A"
+
+  alias {
+    name                   = aws_lb.k8s_alb.dns_name
+    zone_id                = aws_lb.k8s_alb.zone_id
+    evaluate_target_health = true
   }
 }
 
@@ -255,7 +251,7 @@ resource "aws_instance" "worker" {
       EOF2
       sudo sysctl --system
       curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      sudo apt-get update && sudo apt-get install -y systemd apt-transport-https ca-certificates curl gpg unzip nfs-kernel-server nfs-common bash-completion
+      sudo apt-get update && sudo apt-get install -y systemd apt-transport-https ca-certificates curl gpg unzip bash-completion
       sudo hostnamectl set-hostname PICK-worker-${count.index + 1}
       unzip awscliv2.zip
       sudo ./aws/install
@@ -288,13 +284,44 @@ resource "aws_instance" "worker" {
         mkdir ~/.kube
         aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > ~/.kube/config
         #Ingress Controller
-        wget https://raw.githubusercontent.com/FabioBartoli/LINUXtips-PICK/main/modules/k8s_provisioner/ingress-deploy.yaml
-        kubectl apply --validate=false -f ingress-deploy.yaml 
+        git clone https://github.com/FabioBartoli/LINUXtips-PICK.git
+        kubectl apply --validate=false -f ./LINUXtips-PICK/main/modules/k8s_provisioner/ingress-deploy.yaml
         kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
         # Helm
         curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
         chmod 700 get_helm.sh
         ./get_helm.sh
+        # Adicionando repos ao Helm
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm repo add harbor https://helm.goharbor.io
+        helm repo add kyverno https://kyverno.github.io/kyverno/
+        helm repo update
+        kubectl create ns harbor && kubectl create ns monitoring
+        # Instalando o Harbor
+        kubectl config set-context --current --namespace=harbor
+        helm install harbor harbor/harbor --set expose.type=clusterIP --set expose.tls.auto.commonName=fabiobartoli.com.br --set persistence.enabled=false
+        # Instalando o Kube-Prometheus
+        kubectl config set-context --current --namespace=monitoring
+        helm install kube-prometheus prometheus-community/kube-prometheus-stack
+        # Instalando o Kyverno
+        kubectl config set-context --current --namespace=default
+        helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
+        ###### Instalando os Ingress
+        k apply -f ./LINUXtips-PICK/manifests/ingress/
+        #### Locust
+        sudo mkdir -p /usr/src/app/scripts/
+        cat <<EOF2 | sudo tee /usr/src/app/scripts/locustfile.py
+        from locust import HttpUser, task, between
+        class Giropops(HttpUser):
+            wait_time = between(1, 2)
+            @task(1)
+            def gerar_senha(self):
+                self.client.post("/api/gerar-senha", json={"tamanho": 8, "incluir_numeros": True, "incluir_caracteres_especiais": True})
+            @task(2)
+            def listar_senha(self):
+                self.client.get("/api/senhas")
+        EOF2
+        k apply -f LINUXtips-PICK/manifests/locust/
       fi
       EOF
     ]

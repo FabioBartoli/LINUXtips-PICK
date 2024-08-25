@@ -1,0 +1,15 @@
+apiVersion: v1
+data:
+  locustfile.py: |-
+    from locust import HttpUser, task, between
+
+    class Giropops(HttpUser):
+        wait_time = between(1, 2)
+
+        @task(1)
+        def listar_senha(self):
+            self.client.get("/")
+kind: ConfigMap
+metadata:
+  name: locust-scripts
+  namespace: locust

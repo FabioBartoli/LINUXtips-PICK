@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: locust-giropops
+    namespace: locust
+  name: locust-giropops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust-giropops
+  template:
+    metadata:
+      labels:
+        app: locust-giropops
+    spec:
+      containers:
+      - image: linuxtips/locust-giropops:1.0
+        name: locust-giropops
+        env:
+          - name:  LOCUST_LOCUSTFILE
+            value: "/usr/src/app/scripts/locustfile.py"
+        ports:
+        - containerPort: 8089
+        imagePullPolicy: Always
+        volumeMounts:
+        - name: locust-scripts
+          mountPath: /usr/src/app/scripts
+      volumes:
+      - name: locust-scripts
+        configMap:
+          name: locust-scripts
+          optional: true

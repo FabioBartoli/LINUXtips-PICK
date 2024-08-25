@@ -25,3 +25,14 @@ variable "key_name" {
   description = "The name of the key pair to use for the instances"
   default     = "k8s-key"
 }
+
+variable "dns_names" {
+  type    = list(string)
+  default = [
+    "giropops-senhas.fabiobartoli.com.br",
+    "grafana.fabiobartoli.com.br",
+    "harbor.fabiobartoli.com.br",
+    "locust.fabiobartoli.com.br",
+    "prometheus.fabiobartoli.com.br"
+  ]
+}
