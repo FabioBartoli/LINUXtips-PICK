@@ -300,7 +300,7 @@ resource "aws_instance" "worker" {
         helm repo add harbor https://helm.goharbor.io
         helm repo add kyverno https://kyverno.github.io/kyverno/
         helm repo update
-        kubectl create ns harbor && kubectl create ns monitoring
+        kubectl create ns harbor && kubectl create ns monitoring && kubectl create ns locust
       fi
       EOF
     ]
