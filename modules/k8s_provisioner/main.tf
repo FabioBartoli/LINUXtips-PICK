@@ -216,7 +216,7 @@ resource "aws_route53_record" "dns_records" {
     zone_id                = aws_lb.k8s_alb.zone_id
     evaluate_target_health = true
   }
-  
+
   lifecycle {
     create_before_destroy = true
   }
@@ -314,18 +314,8 @@ resource "aws_instance" "worker" {
         k apply -f ./LINUXtips-PICK/manifests/ingress/
         #### Locust
         sudo mkdir -p /usr/src/app/scripts/
-        cat <<EOF2 | sudo tee /usr/src/app/scripts/locustfile.py
-        from locust import HttpUser, task, between
-        class Giropops(HttpUser):
-            wait_time = between(1, 2)
-            @task(1)
-            def gerar_senha(self):
-                self.client.post("/api/gerar-senha", json={"tamanho": 8, "incluir_numeros": True, "incluir_caracteres_especiais": True})
-            @task(2)
-            def listar_senha(self):
-                self.client.get("/api/senhas")
-        EOF2
-        k apply -f LINUXtips-PICK/manifests/locust/
+        mv ./LINUXtips-PICK/manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py
+        k apply -f ./LINUXtips-PICK/manifests/locust/
       fi
       EOF
     ]
