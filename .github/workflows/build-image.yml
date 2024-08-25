@@ -67,9 +67,9 @@ jobs:
       - name: Tag, Sign and Push image
         run: |
           cd ${GITHUB_WORKSPACE}/app/melange-giropops-senhas/
+          docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }}
           cosign sign --key cosign.key harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} --yes
           docker tag harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} harbor.fabiobartoli.com.br/pick2024/giropops-senhas:latest
           docker tag harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }} harbor.fabiobartoli.com.br/pick2024/giropops-senhas::${{ GITHUB.SHA }}
-          docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas:${{ needs.set-environment.outputs.environment }}
           docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas::${{ GITHUB.SHA }}
           docker push harbor.fabiobartoli.com.br/pick2024/giropops-senhas:latest
