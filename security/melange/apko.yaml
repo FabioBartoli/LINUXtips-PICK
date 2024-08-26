@@ -5,6 +5,7 @@ contents:
   packages:
     - alpine-baselayout
     - giropops-senhas
+    - curl
 accounts:
   groups:
     - groupname: nonroot
