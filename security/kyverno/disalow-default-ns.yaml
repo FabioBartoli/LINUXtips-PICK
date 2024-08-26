@@ -21,7 +21,7 @@ spec:
           kinds:
           - Pod
     validate:
-      message: "Using 'default' namespace is not allowed."
+      message: "Não é possível utilizar o namespace default!"
       pattern:
         metadata:
           namespace: "!default"

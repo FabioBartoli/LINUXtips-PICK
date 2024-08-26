@@ -16,4 +16,4 @@ spec:
         spec:
           containers:
           - securityContext:
-              runASNonRoot: true
+              runAsUser: "!0"

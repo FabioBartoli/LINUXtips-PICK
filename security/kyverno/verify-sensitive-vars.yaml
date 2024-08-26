@@ -21,11 +21,33 @@ spec:
           - kyverno
           - monitoring
       validate:
-        message: "Não é permitido passar senhas como variáveis nesse Cluster! Use Secrets ao invés disso"
+        message: "Secrets não devem ser montadas como variáveis!"
         pattern:
           spec:
             containers:
-              - env:
-                  - name: "!*KEY*"
-                  - name: "!*SECRET*"
-                  - name: "!*TOKEN*"
+            - name: "*"
+              =(env):
+              - =(valueFrom):
+                  X(secretKeyRef): "null"
+    - name: secrets-not-from-envfrom
+      match:
+        any:
+        - resources:
+            kinds:
+            - Pod
+      exclude:
+        resources:
+          namespaces:
+          - harbor
+          - ingress-nginx
+          - kube-system
+          - kyverno
+          - monitoring
+      validate:
+        message: "Secrets não devem ser montadas como variáveis!"
+        pattern:
+          spec:
+            containers:
+            - name: "*"
+              =(envFrom):
+              - X(secretRef): "null"

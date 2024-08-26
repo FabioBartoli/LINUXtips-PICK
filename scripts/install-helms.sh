@@ -8,7 +8,7 @@ kubectl config set-context --current --namespace=monitoring
 helm install kube-prometheus prometheus-community/kube-prometheus-stack
 # Instalando o Kyverno
 kubectl config set-context --current --namespace=default
-helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace --version 2.6.5
+helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
 #### Instalando o Locust
 sudo mkdir -p /usr/src/app/scripts/
 sudo mv /home/ubuntu/LINUXtips-PICK/manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py

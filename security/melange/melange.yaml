@@ -23,6 +23,7 @@ environment:
       - python3-dev
       - py3-pip
       - py3-virtualenv
+      - curl
 pipeline:
   - name: Build Python application
     runs: |

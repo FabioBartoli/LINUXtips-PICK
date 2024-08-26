@@ -1,0 +1,20 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: ensure-images-from-trusted-registry
+  namespace: giropops
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: trusted-registry
+    match: 
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Utilize imagens do Registry Harbor!"
+      pattern:
+        spec:
+          containers:
+          - name: "*"
+            image: "harbor.fabiobartoli.com.br/*"

@@ -41,6 +41,8 @@ spec:
               cpu: {{ $container.resources.requests.cpu }}
           securityContext:
             allowPrivilegeEscalation: {{ $container.securityContext.allowPrivilegeEscalation }}
+            runAsUser: {{ $container.securityContext.runAsUser }}
+            runAsGroup: {{ $container.securityContext.runAsGroup }}
             capabilities:
               drop:
                 {{- range $capability := $container.securityContext.capabilities.drop }}

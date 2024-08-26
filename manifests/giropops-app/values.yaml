@@ -7,7 +7,7 @@ deployments:
       app: giropops-senhas
     containers:
       - name: giropops-senhas
-        image: linuxtips/giropops-senhas:1.0
+        image: harbor.fabiobartoli.com.br/pick2024/melange-giropops-senhas
         ports:
           - containerPort: 5000
         env:
@@ -22,6 +22,8 @@ deployments:
             cpu: "250m"
         securityContext:
           allowPrivilegeEscalation: false
+          runAsUser: 1000
+          runAsGroup: 3000
           capabilities:
             drop:
               - ALL
@@ -53,7 +55,10 @@ deployments:
       app: redis
     containers:
       - name: redis
-        image: redis
+        image: harbor.fabiobartoli.com.br/pick2024/redis
+        env:
+          - name: APP_NAME
+            value: redis
         ports:
           - containerPort: 6379
         resources:
@@ -64,6 +69,8 @@ deployments:
             memory: "128Mi"
             cpu: "250m"
         securityContext:
+          runAsUser: 1000
+          runAsGroup: 3000
           allowPrivilegeEscalation: false
           capabilities:
             drop:
