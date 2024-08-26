@@ -1,0 +1,125 @@
+deployments:
+  - name: giropops-senhas
+    namespace: giropops
+    replicas: 2
+    serviceAccountName: giropops-senhas-sa
+    labels:
+      app: giropops-senhas
+    containers:
+      - name: giropops-senhas
+        image: harbor.fabiobartoli.com.br/pick2024/melange-giropops-senhas
+        ports:
+          - containerPort: 5000
+        env:
+          - name: REDIS_HOST
+            value: redis-service
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsUser: 1000
+          runAsGroup: 3000
+          capabilities:
+            drop:
+              - ALL
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - curl
+            - -f
+            - http://localhost:5000/
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+
+  - name: redis-deployment
+    namespace: giropops
+    replicas: 1
+    serviceAccountName: redis-sa
+    labels:
+      app: redis
+    containers:
+      - name: redis
+        image: harbor.fabiobartoli.com.br/pick2024/redis
+        env:
+          - name: APP_NAME
+            value: redis
+        ports:
+          - containerPort: 6379
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 3000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+              - CHOWN
+              - SETUID
+              - SETGID
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 5
+          failureThreshold: 5
+          successThreshold: 1
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 20
+          timeoutSeconds: 5
+          periodSeconds: 3
+        
+services:
+  - name: giropops-senhas
+    namespace: giropops
+    selector:
+      app: giropops-senhas
+    ports:
+      - protocol: TCP
+        port: 5000
+        targetPort: 5000
+        name: tcp-app
+
+  - name: redis-service
+    namespace: giropops
+    selector:
+      app: redis
+    ports:
+      - protocol: TCP
+        port: 6379
+        targetPort: 6379
+
+serviceAccounts:
+  - name: giropops-senhas-sa
+    namespace: giropops
+
+  - name: redis-sa
+    namespace: giropops
