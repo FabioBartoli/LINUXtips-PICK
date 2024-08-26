@@ -5,6 +5,7 @@ metadata:
   name: {{ $deployment.name }}
   namespace: {{ $deployment.namespace }}
   labels:
+    env: {{ .Values.env | default "dev" }}
     {{- range $key, $value := $deployment.labels }}
     {{ $key }}: {{ $value }}
     {{- end }}
