@@ -1,0 +1,27 @@
+apiVersion: v1
+entries:
+  ingress-templates:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2024-08-26T18:05:33.890213211-03:00"
+    description: Helm chart reutilizável para configurar Ingresses no Kubernetes
+    digest: 5620153968b1839823cd7a89d48bb5e6d6c782a68cc09f67dbd95179605f1a26
+    keywords:
+    - ingress
+    - nginx
+    - kubernetes
+    - helm
+    - harbor
+    - locust
+    - kube-prometheus
+    maintainers:
+    - email: fabio.bartoli@outlook.com
+      name: Fabio Bartoli
+    name: ingress-templates
+    sources:
+    - https://github.com/FabioBartoli/LINUXtips-PICK/
+    type: application
+    urls:
+    - https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/ingress/ingress-templates-0.1.0.tgz
+    version: 0.1.0
+generated: "2024-08-26T18:05:33.889914709-03:00"
