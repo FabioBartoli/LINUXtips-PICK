@@ -13,5 +13,3 @@ helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
 sudo mkdir -p /usr/src/app/scripts/
 sudo mv /home/ubuntu/LINUXtips-PICK/manifests/locust/locustfile.py /usr/src/app/scripts/locustfile.py
 kubectl apply -f /home/ubuntu/LINUXtips-PICK/manifests/locust/
-###### Instalando os Ingress
-kubectl apply -f /home/ubuntu/LINUXtips-PICK/manifests/ingress/
