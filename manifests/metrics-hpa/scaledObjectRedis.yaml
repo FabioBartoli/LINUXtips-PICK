@@ -6,13 +6,13 @@ metadata:
 spec:
   scaleTargetRef:
     kind: Deployment
-    name: redis
+    name: redis-deployment
   minReplicaCount: 1
   maxReplicaCount: 10
   triggers:
   - type: prometheus
     metadata:
-      serverAddress: https://prometheus.fabiobartoli.com.br/
+      serverAddress: http://kube-prometheus.monitoring.svc.cluster.local/
       metricName: giropops_senhas_replicas
       threshold: '1'
       query: |

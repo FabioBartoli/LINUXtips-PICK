@@ -21,5 +21,5 @@ helm install ingress-controller ingress/ingress-templates
 # Instalando o Metrics Server
 kubectl apply -f /home/ubuntu/LINUXtips-PICK/manifests/metrics-hpa/components.yaml
 # Instalando o Keda
-helm install keda kedacore/keda
+helm install keda kedacore/keda --namespace keda --create-namespace
 #helm install giropops giropops-app/giropops-chart --set env=stg
