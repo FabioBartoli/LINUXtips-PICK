@@ -87,7 +87,7 @@ def gerar_senha_api():
         r.lpush("senhas", senha)
         senha_gerada_counter.inc()
 
-    return jsonify({"senha": senha})
+    return jsonify({"senha": senha}), 200
 
 @app.route('/api/senhas', methods=['GET'])
 @tempo_resposta_api_histogram.time()

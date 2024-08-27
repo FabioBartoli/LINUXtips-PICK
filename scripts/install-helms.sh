@@ -17,4 +17,7 @@ kubectl apply -f /home/ubuntu/LINUXtips-PICK/manifests/locust/
 kubectl apply -f /home/ubuntu/LINUXtips-PICK/security/kyverno/docker-cred.yaml -n giropops
 kubectl apply -f /home/ubuntu/LINUXtips-PICK/security/kyverno/docker-cred.yaml -n kyverno
 # Instalando os Paths do Ingress
-helm install ingress-controller ingresses/ingress-templates
+helm install ingress-controller ingress/ingress-templates
+# Instalando o Metrics Server
+kubectl apply -f /home/ubuntu/LINUXtips-PICK/manifests/metrics-hpa/components.yaml
+#helm install giropops giropops-app/giropops-chart --set env=stg

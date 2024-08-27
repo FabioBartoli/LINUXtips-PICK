@@ -287,6 +287,7 @@ resource "aws_instance" "worker" {
       if [ "$(hostname)" = "PICK-worker-1" ]; then
         mkdir ~/.kube
         aws ssm get-parameter --name "k8s_kubeconfig" --query "Parameter.Value" --with-decryption --output text > ~/.kube/config
+        sudo chmod 600 /home/ubuntu/.kube/config
         #Ingress Controller
         git clone https://github.com/FabioBartoli/LINUXtips-PICK.git
         kubectl apply --validate=false -f ./LINUXtips-PICK/modules/k8s_provisioner/ingress-deploy.yaml

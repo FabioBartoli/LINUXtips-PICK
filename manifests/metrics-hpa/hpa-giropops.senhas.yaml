@@ -2,12 +2,12 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: giropops-senhas-hpa
+  namespace: giropops
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: giropops-senhas
-    namespace: giropops
   minReplicas: 2
   maxReplicas: 10
   metrics:

@@ -27,6 +27,10 @@ spec:
         volumeMounts:
         - name: locust-scripts
           mountPath: /usr/src/app/scripts
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsUser: 1000
+          runAsGroup: 3000
       volumes:
       - name: locust-scripts
         configMap:

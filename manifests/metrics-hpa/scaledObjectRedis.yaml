@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: redis-scaledobject
+  namespace: giropops
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: redis
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: https://prometheus.fabiobartoli.com.br/
+      metricName: giropops_senhas_replicas
+      threshold: '1'
+      query: |
+        sum(kube_deployment_status_replicas{namespace="giropops",deployment="giropops-senhas"})
