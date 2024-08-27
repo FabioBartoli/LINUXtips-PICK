@@ -68,6 +68,12 @@ spec:
             {{- toYaml $container.livenessProbe | nindent 12 }}
           readinessProbe:
             {{- toYaml $container.readinessProbe | nindent 12 }}
+          {{- if $container.command }}
+          command:
+            {{- range $cmd := $container.command }}
+            - {{ $cmd }}
+            {{- end }}
+          {{- end }}
         {{- end }}
 ---
 {{- end }}

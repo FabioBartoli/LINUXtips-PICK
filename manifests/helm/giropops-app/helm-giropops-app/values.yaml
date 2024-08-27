@@ -95,6 +95,7 @@ deployments:
           initialDelaySeconds: 20
           timeoutSeconds: 5
           periodSeconds: 3
+        command: ["redis-server", "--appendonly", "no"]
     imagePullSecrets:
       - name: regcred
      
