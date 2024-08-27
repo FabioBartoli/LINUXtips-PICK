@@ -29,6 +29,7 @@ spec:
           - kyverno
           - monitoring
           - locust
+          - keda
     preconditions:
       all:
       - key: "{{request.operation || 'BACKGROUND'}}"

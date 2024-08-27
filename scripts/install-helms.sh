@@ -20,4 +20,6 @@ kubectl apply -f /home/ubuntu/LINUXtips-PICK/security/kyverno/docker-cred.yaml -
 helm install ingress-controller ingress/ingress-templates
 # Instalando o Metrics Server
 kubectl apply -f /home/ubuntu/LINUXtips-PICK/manifests/metrics-hpa/components.yaml
+# Instalando o Keda
+helm install keda kedacore/keda
 #helm install giropops giropops-app/giropops-chart --set env=stg

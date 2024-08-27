@@ -20,6 +20,7 @@ spec:
           - kube-system
           - kyverno
           - monitoring
+          - keda
       validate:
         message: "Secrets não devem ser montadas como variáveis!"
         pattern:

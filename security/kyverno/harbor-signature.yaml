@@ -23,6 +23,7 @@ spec:
           - kube-system
           - kyverno
           - monitoring
+          - keda
       verifyImages:
       - imageReferences:
         - "harbor.fabiobartoli.com.br*"

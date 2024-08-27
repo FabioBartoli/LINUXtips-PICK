@@ -18,6 +18,7 @@ spec:
         - kube-system
         - kyverno
         - monitoring
+        - keda
     validate:
       message: "Nenhum container pode ser executado como root! Ajuste as permissões"
       pattern:

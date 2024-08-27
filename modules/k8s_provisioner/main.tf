@@ -302,8 +302,9 @@ resource "aws_instance" "worker" {
         helm repo add kyverno https://kyverno.github.io/kyverno/
         helm repo add ingress https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/ingress/
         helm repo add giropops-app https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/giropops-app/
+        helm repo add kedacore https://kedacore.github.io/charts
         helm repo update
-        kubectl create ns harbor && kubectl create ns monitoring && kubectl create ns locust && kubectl create ns giropops
+        kubectl create ns harbor && kubectl create ns monitoring && kubectl create ns locust && kubectl create ns keda && kubectl create ns giropops
       fi
       EOF
     ]
