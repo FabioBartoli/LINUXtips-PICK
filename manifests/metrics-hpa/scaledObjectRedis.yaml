@@ -9,11 +9,12 @@ spec:
     name: redis-deployment
   minReplicaCount: 1
   maxReplicaCount: 10
+  cooldownPeriod:  60
   triggers:
   - type: prometheus
     metadata:
-      serverAddress: http://kube-prometheus.monitoring.svc.cluster.local/
+      serverAddress: http://kube-prometheus-kube-prome-prometheus.monitoring.svc.cluster.local:9090/
       metricName: giropops_senhas_replicas
-      threshold: '1'
+      threshold: '2'
       query: |
         sum(kube_deployment_status_replicas{namespace="giropops",deployment="giropops-senhas"})

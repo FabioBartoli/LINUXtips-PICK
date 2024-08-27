@@ -2,7 +2,7 @@
 
 # Instalando o Harbor
 kubectl config set-context --current --namespace=harbor
-helm install harbor harbor/harbor --set expose.type=clusterIP --set expose.tls.auto.commonName=fabiobartoli.com.br --set persistence.enabled=false --set externalURL=https://harbor.fabiobartoli.com.br --set fullnameOverride=harbor-harbor --set trivy.enabled=true
+helm install harbor harbor/harbor --set expose.type=clusterIP --set expose.tls.auto.commonName=fabiobartoli.com.br --set persistence.enabled=false --set externalURL=https://harbor.fabiobartoli.com.br --set fullnameOverride=harbor-harbor --set trivy.enabled=true --namespace harbor
 # Instalando o Kube-Prometheus
 kubectl config set-context --current --namespace=monitoring
 helm install kube-prometheus prometheus-community/kube-prometheus-stack
