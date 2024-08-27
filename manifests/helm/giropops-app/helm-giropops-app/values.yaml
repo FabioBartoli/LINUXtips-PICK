@@ -46,6 +46,8 @@ deployments:
           timeoutSeconds: 5
           failureThreshold: 3
           successThreshold: 1
+    imagePullSecrets:
+      - name: regcred
 
   - name: redis-deployment
     namespace: giropops
@@ -56,9 +58,6 @@ deployments:
     containers:
       - name: redis
         image: harbor.fabiobartoli.com.br/pick2024/redis
-        env:
-          - name: APP_NAME
-            value: redis
         ports:
           - containerPort: 6379
         resources:
@@ -96,7 +95,9 @@ deployments:
           initialDelaySeconds: 20
           timeoutSeconds: 5
           periodSeconds: 3
-        
+    imagePullSecrets:
+      - name: regcred
+     
 services:
   - name: giropops-senhas
     namespace: giropops

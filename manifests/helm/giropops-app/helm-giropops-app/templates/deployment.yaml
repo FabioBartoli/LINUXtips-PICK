@@ -23,6 +23,12 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ $deployment.serviceAccountName }}
+      {{- if $deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $secret := $deployment.imagePullSecrets }}
+        - name: {{ $secret.name }}
+        {{- end }}
+      {{- end }}
       containers:
         {{- range $container := $deployment.containers }}
         - name: {{ $container.name }}

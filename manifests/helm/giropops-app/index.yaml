@@ -3,10 +3,10 @@ entries:
   giropops-chart:
   - apiVersion: v2
     appVersion: "1.0"
-    created: "2024-08-26T18:04:35.842306692-03:00"
+    created: "2024-08-26T21:07:08.194533872-03:00"
     description: Helm chart para criar os Deployments, Services e ServiceAccounts
       do giropops
-    digest: c884fa26c6725fafae807d43cf0983aaa48da6e344c98b9e56ba5bb31283ba6e
+    digest: 712e07ad91dae023aa2a6abc5e27067da237e11f7b723b1f803744418d237c40
     keywords:
     - ingress
     - giropops
@@ -20,4 +20,4 @@ entries:
     urls:
     - https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/giropops-app/giropops-chart-0.1.0.tgz
     version: 0.1.0
-generated: "2024-08-26T18:04:35.841930665-03:00"
+generated: "2024-08-26T21:07:08.194152363-03:00"
