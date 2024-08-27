@@ -71,7 +71,7 @@ spec:
           {{- if $container.command }}
           command:
             {{- range $cmd := $container.command }}
-            - {{ $cmd }}
+            - {{ $cmd | quote }}
             {{- end }}
           {{- end }}
         {{- end }}
