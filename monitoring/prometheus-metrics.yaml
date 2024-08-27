@@ -2,14 +2,15 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: giropops-senhas-servicemonitor
+  namespace: monitoring
   labels:
-    release: prometheus
+    release: kube-prometheus
 spec:
   selector:
     matchLabels:
       app: giropops-senhas
   endpoints:
-  - port: "80"
+  - port: tcp-app
     path: /metrics
     interval: 30s
   namespaceSelector:

@@ -17,8 +17,6 @@ redis_host = os.environ.get('REDIS_HOST', 'redis-service')
 redis_port = 6379
 redis_password = ""
 
-r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
-
 senha_gerada_counter = Counter('senha_gerada', 'Contador de senhas geradas')
 senha_gerada_numeros_counter = Counter('senha_gerada_numeros', 'Contador de senhas geradas com números')
 senha_gerada_caracteres_especiais_counter = Counter('senha_gerada_caracteres_especiais', 'Contador de senhas geradas com caracteres especiais')
@@ -55,7 +53,6 @@ def index():
         tamanho = int(request.form.get('tamanho', 8))
         incluir_numeros = request.form.get('incluir_numeros') == 'on'
         incluir_caracteres_especiais = request.form.get('incluir_caracteres_especiais') == 'on'
-        senha = criar_senha(tamanho, incluir_numeros, incluir_caracteres_especiais)
 
         #Medir time de gerar uma senha:
         start_time = time.time()
@@ -66,7 +63,7 @@ def index():
             r.lpush("senhas", senha)
             senha_gerada_counter.inc()
 
-    senhas = r.lrange("senhas", 0, 9)
+    senhas = r.lrange("senhas", 0, 9) if r else []
     if senhas:
         senhas_geradas = [{"id": index + 1, "senha": senha} for index, senha in enumerate(senhas)]
         return render_template('index.html', senhas_geradas=senhas_geradas, senha=senhas_geradas[0]['senha'] or '' )
