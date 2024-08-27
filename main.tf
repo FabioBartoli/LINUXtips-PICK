@@ -27,7 +27,7 @@ module "k8s_provisioner" {
   ami              = "ami-04b70fa74e45c3917" // Ubuntu Server 24.04 LTS (HVM), SSD Volume Type
   cp_instance_type = "t3a.small" // 2vCPU x 2Gib Memory
   instance_type    = "t3a.small" // 2vCPU x 2Gib Memory
-  volume_size           = 8
+  volume_size           = 64
   instance_count        = 4                       // Número de instâncias
   vpc_id                = "vpc-096357cb7db323b17" // ID da sua VPC
   k8s_subnet_cidr       = var.k8s_subnet_cidr

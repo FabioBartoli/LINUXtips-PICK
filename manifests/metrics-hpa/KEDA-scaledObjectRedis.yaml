@@ -15,6 +15,6 @@ spec:
     metadata:
       serverAddress: http://kube-prometheus-kube-prome-prometheus.monitoring.svc.cluster.local:9090/
       metricName: giropops_senhas_replicas
-      threshold: '2'
+      threshold: '3'
       query: |
         sum(kube_deployment_status_replicas{namespace="giropops",deployment="giropops-senhas"})

@@ -1,13 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 import logging
 import os
-from prometheus_client import Counter, Histogram, start_http_server, generate_latest
+from prometheus_client import Counter, Histogram, Gauge, start_http_server, generate_latest
 import random
 import redis
 import socket
 import string
 import time
-
 
 app = Flask(__name__, 
             template_folder='./templates',
@@ -20,9 +19,13 @@ redis_password = ""
 senha_gerada_counter = Counter('senha_gerada', 'Contador de senhas geradas')
 senha_gerada_numeros_counter = Counter('senha_gerada_numeros', 'Contador de senhas geradas com números')
 senha_gerada_caracteres_especiais_counter = Counter('senha_gerada_caracteres_especiais', 'Contador de senhas geradas com caracteres especiais')
+senha_gerada_sem_caracteres_especiais_counter = Counter('senha_gerada_sem_caracteres_especiais', 'Contador de senhas geradas sem caracteres especiais')
+senha_gerada_sem_numeros_counter = Counter('senha_gerada_sem_numeros', 'Contador de senhas geradas sem números')
 redis_connection_error_counter = Counter('redis_connection_errors', 'Contador de erros de conexão com Redis')
 tempo_gerar_senha_histogram = Histogram('tempo_gerar_senha', 'Tempo para gerar uma senha')
 tempo_resposta_api_histogram = Histogram('tempo_resposta_api', 'Tempo de resposta da API')
+api_erro_counter = Counter('api_errors', 'Contador de erros de API', ['endpoint', 'status_code'])
+tamanho_fila_senhas_gauge = Gauge('tamanho_fila_senhas', 'Tamanho da fila de senhas no Redis')
 
 try:
     r = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
@@ -42,8 +45,13 @@ def criar_senha(tamanho, incluir_numeros, incluir_caracteres_especiais):
     if incluir_caracteres_especiais:
         caracteres += string.punctuation
         senha_gerada_caracteres_especiais_counter.inc()
+    else:
+        senha_gerada_sem_caracteres_especiais_counter.inc()
 
     senha = ''.join(random.choices(caracteres, k=tamanho))
+
+    if not any(char.isdigit() for char in senha):
+        senha_gerada_sem_numeros_counter.inc()
 
     return senha
 
@@ -80,22 +88,31 @@ def gerar_senha_api():
     incluir_caracteres_especiais = dados.get('incluir_caracteres_especiais', False)
 
     start_time = time.time()
-    senha = criar_senha(tamanho, incluir_numeros, incluir_caracteres_especiais)
-    tempo_gerar_senha_histogram.observe(time.time() - start_time)
-
-    if r:
-        r.lpush("senhas", senha)
-        senha_gerada_counter.inc()
-
-    return jsonify({"senha": senha}), 200
+    try:
+        senha = criar_senha(tamanho, incluir_numeros, incluir_caracteres_especiais)
+        tempo_gerar_senha_histogram.observe(time.time() - start_time)
+        if r:
+            r.lpush("senhas", senha)
+            senha_gerada_counter.inc()
+        return jsonify({"senha": senha}), 200
+    except Exception as e:
+        api_erro_counter.labels(endpoint='/api/gerar-senha', status_code='500').inc()
+        logging.error(f"Erro na API /api/gerar-senha: {str(e)}", exc_info=True)
+        return jsonify({"error": "Erro ao gerar senha"}), 500
 
 @app.route('/api/senhas', methods=['GET'])
 @tempo_resposta_api_histogram.time()
 def listar_senhas():
-    senhas = r.lrange("senhas", 0, 9) if r else []
+    try:
+        senhas = r.lrange("senhas", 0, 9) if r else []
+        tamanho_fila_senhas_gauge.set(len(senhas))
 
-    resposta = [{"id": index + 1, "senha": senha} for index, senha in enumerate(senhas)]
-    return jsonify(resposta)
+        resposta = [{"id": index + 1, "senha": senha} for index, senha in enumerate(senhas)]
+        return jsonify(resposta)
+    except Exception as e:
+        api_erro_counter.labels(endpoint='/api/senhas', status_code='500').inc()
+        logging.error(f"Erro na API /api/senhas: {str(e)}", exc_info=True)
+        return jsonify({"error": "Erro ao listar senhas"}), 500
 
 @app.route('/metrics')
 def metrics():
