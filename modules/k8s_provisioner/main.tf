@@ -111,7 +111,7 @@ resource "aws_instance" "control_plane" {
       sudo sed -i 's/^KUBELET_EXTRA_ARGS=.*/KUBELET_EXTRA_ARGS=--max-pods=110/' /etc/default/kubelet
       sudo systemctl restart containerd
       sudo systemctl enable --now kubelet
-      sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=${aws_instance.control_plane.private_ip} --ignore-preflight-errors=NumCPU,Mem
+      sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --apiserver-advertise-address=${aws_instance.control_plane.private_ip}
       mkdir -p $HOME/.kube
       sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
       sudo chown $(id -u):$(id -g) $HOME/.kube/config
@@ -299,8 +299,10 @@ resource "aws_instance" "worker" {
         helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
         helm repo add harbor https://helm.goharbor.io
         helm repo add kyverno https://kyverno.github.io/kyverno/
+        helm repo add ingress https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/ingress/
+        helm repo add giropops-app https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/giropops-app/
         helm repo update
-        kubectl create ns harbor && kubectl create ns monitoring && kubectl create ns locust
+        kubectl create ns harbor && kubectl create ns monitoring && kubectl create ns locust && kubectl create ns giropops
       fi
       EOF
     ]

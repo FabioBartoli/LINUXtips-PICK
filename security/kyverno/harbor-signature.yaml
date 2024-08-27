@@ -26,6 +26,9 @@ spec:
       verifyImages:
       - imageReferences:
         - "harbor.fabiobartoli.com.br*"
+        imageRegistryCredentials:
+          secrets:
+          - regcred
         attestors:
         - count: 1
           entries:

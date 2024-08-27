@@ -10,6 +10,14 @@ spec:
       resources:
         kinds:
           - Pod
+    exclude:
+      resources:
+        namespaces:
+        - harbor
+        - ingress-nginx
+        - kube-system
+        - kyverno
+        - monitoring
     validate:
       message: "Nenhum container pode ser executado como root! Ajuste as permissões"
       pattern:
