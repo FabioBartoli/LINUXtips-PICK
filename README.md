@@ -121,7 +121,7 @@ Dito isto, vou fazer o build da nossa imagem para ver o que acontece:
 
 Podemos ver que a complexidade aumentou mais um pouco, pois agora é gerado um arquivo compactado da nossa aplicação que carregamos para o docker para poder utilizar. Mas já conseguimos diminuir para 59MB (a primeira tinha 148MB), agora sabemos que a imagem tem apenas o que precisamos para executar nossa aplicação. Mas agora, a cereja do bolo:
 
-![camadas-melange](./docs/images/build-melange.png)
+![camadas-melange](./docs/images/camadas-buildmelange.png)
 
 Nossa imagem tem APENAS UMA CAMADA apko. O que significa que todo nosso processo de buildar a imagem agora fica abstraído e nenhuma informação sobre isso pode ser descoberto na imagem final. Perceba também que agora o meu comando "docker run" com o "cat /etc/os-release" nem foi respeitado, pois nosso ponto de acesso é justamente a nossa aplicação, sem muitas possibilidades para cair dentro do container. Apenas para não restar dúvidas, vamos rodar o scan nela também:
 ![scan-melange](./docs/images/scan-build-melange.png)
