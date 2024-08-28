@@ -11,11 +11,13 @@ A aplicação **Giropops Senhas** é uma ferramenta desenvolvida pela LinuxTips 
 	 - [Primeiro Método: O build convencional](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#primeiro-m%C3%A9todo-o-build-convencional) 
 	 - [Segundo Método: Build utilizando Imagens Distroless](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#segundo-m%C3%A9todo-build-utilizando-imagens-distroless)
 	 - [Terceiro Método: Vamos criar uma imagem do zero?](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#terceiro-m%C3%A9todo-vamos-criar-uma-imagem-do-zero)
- - Criando Deploys com o Helm
- - Garantindo a segurança com Kyverno
- - Utilizando o Harbor para garantir imagens seguras
+ - [Criando Deploys com o Helm](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#criando-deploys-com-o-helm)
+ - [Garantindo a segurança com Kyverno](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#garantindo-a-seguran%C3%A7a-com-kyverno)
+ - [Utilizando o Harbor para garantir imagens seguras](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#utilizando-o-harbor-para-garantir-imagens-seguras)
  - Monitorando nossa Aplicação
  - Hora de Estressar!
+	 - Conhecendo o Kubernetes-based Event Driven Autoscaling - KEDA
+	 - Stress Test com Locust
 
 Para resolver esse desafio, eu utilizei as seguintes ferramentas/ tecnologias:
 ### Stack de Ferramentas/ Tecnologias:
@@ -31,6 +33,7 @@ Para resolver esse desafio, eu utilizei as seguintes ferramentas/ tecnologias:
  - [Kyverno](https://kyverno.io/)
  - [Locust](https://locust.io/)
  - [Melange](https://github.com/chainguard-dev/melange)
+ - [Metrics-Server](https://github.com/kubernetes-sigs/metrics-server)
  - [Nginx-Ingress](https://github.com/kubernetes/ingress-nginx)
  - [Prometheus Stack (+ Grafana)](https://github.com/prometheus-community/helm-charts)
  - [Terraform](https://www.terraform.io/)
@@ -40,7 +43,6 @@ Eu me baseei em outro projeto que desenvolvi ainda durante o PICK2024 para a cri
 Mas, para esse desafio, as coisas são um pouco diferentes e, apesar de utilizar o mesmo "esqueleto" do Terraform, tive que fazer várias alterações para que o cluster criado suporte tudo que eu utilizarei, inclusive sendo necessário utilizar máquinas fora do free tier para que atendam aos requisitos mínimos do Kubernetes. 
 Eu também adicionei em meu Terraform o provisionamento de um Application LoadBalancer e de registros DNS na minha Hosted Zone para apontarem para este LoadBalancer que estarei criando. Aqui, eu tentei "contornar" a utilização do EKS + Network Load Balancer, 2 recursos que possuem custos e não estão inclusos no free tier, pela utilização de instâncias EC2 gerenciadas pelo Kubeadm com um Application Load Balancer, que possui um período de 750 horas/ mês para utilização no Free Tier.
 Em resumo, o cenário que eu quis montar foi para pagar o menos possível, em comparativo:
-
 | Stack "Normal" - EKS + Instâncias + NLB             | Preço            | Stack "Manual", EC2 + ALB     | Preço                                  |
 |-----------------------------------------------------|------------------|------------------------------------------------|----------------------------------------|
 | EKS                                                 | $0,10/hora        | 4 Instâncias (1 CP + 3 Workers) - t3a.small     | (0,0188) * 4 = $0,0752/hora             |
@@ -315,3 +317,141 @@ Instalando o nosso Helm:
 E por fim, acessando nosso ambiente, com certificado seguro:
 
  ![acesso-giropops](./docs/images/acesso-giropops.png)
+
+### Monitorando nossa Aplicação
+Quase chegando no fim da construção do ambiente, vamos falar agora sobre monitoramento. Realizei a instalação da Stack Prometheus + Grafana no namespace "monitoring" do meu cluster com o comando abaixo:
+
+    helm  install  kube-prometheus  prometheus-community/kube-prometheus-stack
+
+Na aplicação giropops-senhas, eu fiz algumas adições no código de pontos que eu gostaria de monitorar. Você pode conferir em: [app.py](./app/melange-giropops-senhas/app.py)
+Um resumo do que coloquei a mais para ser monitorado:
+
+ - `senha_gerada_numeros`: Quero contar todas as senhas geradas que contém números
+ - `senha_gerada_sem_numeros_counter`: Das senhas geradas, quantas não possuem números
+ - `senha_gerada_caracteres_especiais`: Quero contar todas as senhas geradas que contém caracteres especiais
+ - `senha_gerada_sem_caracteres_especiais_counter`: Das senhas geradas, quantas não possuem caracteres especiais
+ - `redis_connection_error_counter`: Contador de erros de conexão com Redis
+ - `tempo_gerar_senha`: Tempo que minha aplicação demora para responder com uma senha gerada
+ - `tempo_resposta_api`: Tempo de resposta da API
+ - `api_errors`: Contador de erros de API
+ - `tamanho_fila_senhas`: Tamanho da fila de senhas no Redis que a aplicação está mantendo
+
+Para monitorar o path /metrics da minha aplicação, eu criei o ServiceMonitor que você pode [conferir aqui](./monitoring/prometheus-metrics.yaml)
+
+![prom-target](./docs/images/prom-target.png)
+
+Usando o Grafana vinculado ao Prometheus, eu montei o seguinte gráfico para monitorar a utilização da minha aplicação:
+
+![grafana-dash](./docs/images/grafana-giropops.png)
+![grafana-tempo-res](./docs/images/grafana-temporesposta.png)
+
+Também usei o Grafana para configurar um Alerta diretamente para o meu Telegram através de um Bot no caso do deployment da aplicação escalar para mais de 6 réplicas:
+
+![grafana-alert](./docs/images/grafana-alert.png)
+ 
+ Escalando meu deployment manualmente para 10 réplicas:
+![scale](./docs/images/scale-deployment.png)
+
+As mensagens já começam a chegar no meu Telegram:
+
+![bot-firing](./docs/images/bot-firing.png)
+
+E quando o problema é resolvido:
+
+![bot-resolved](./docs/images/bot-resolved.png)
+
+### Hora de Estressar!
+Agora que a aplicação já está sendo devidamente monitorada, chegou a hora de criar uma política de AutoScaling para meu deployment e fazer uma carga de estresse nele!
+Para isso, primeiramente vou precisar do [metrics-server](https://github.com/kubernetes-sigs/metrics-server) instalado no meu cluster, e por conta da minha instalação manual do kubernetes, eu preciso baixar o manifesto e passar o parâmetro "`--kubelet-insecure-tls`" para que o deployment suba corretamente. Então, posso aplicar ele no meu cluster com o comando: 
+
+    kubectl  apply  -f  /home/ubuntu/LINUXtips-PICK/manifests/metrics-hpa/metrics-components.yaml
+
+Metrics Server instalado, podemos aplicar também a política que criei para o Horizontal Pod Autoscaling do meu deployment:
+
+    kubectl  apply  -f  /home/ubuntu/LINUXtips-PICK/manifests/metrics-hpa/hpa-giropops.senhas.yaml
+
+Agora, antes de irmos para o stress test em si, tem outra coisa que precisamos notar na aplicação: Se eu fizer um scaling do meu deployment do giropops-senhas sem mexer na minha quantidade de pods do redis, o meu serviço não comporta, e os containers começam a dar "CrashLoopBackOff":
+
+![crashloop](./docs/images/crashloop.png)
+
+Precisamos garantir alguma estratégia para que o Deployment do redis acompanhe, de algum modo, o ScalingUp e ScalingDown do Deployment do giropops-senhas... mas como podemos fazer isso de uma forma automatizada?
+
+#### Conhecendo o Kubernetes-based Event Driven Autoscaling - KEDA
+O KEDA é um projeto reconhecido pela CNCF e que nos permite fazer Scaling de workloads baseados em eventos. Então, junto com o nosso Prometheus, por exemplo, conseguimos forçar o redis-deployment a fazer AutoScaling a medida que a aplicação giropops-senhas também fizer
+A instalação do KEDA também é bem simples no meu cluster, sendo:
+
+    helm repo add kedacore https://kedacore.github.io/charts
+    helm repo update
+    helm  install  keda  kedacore/keda  --namespace  keda  --create-namespace
+
+Com ele devidamente provisionado, eu posso aplicar a política que criei para o Scaling do redis-deployment:
+
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+      name: redis-scaledobject
+      namespace: giropops
+    spec:
+      scaleTargetRef:
+        kind: Deployment
+        name: redis-deployment
+      minReplicaCount: 1
+      maxReplicaCount: 10
+      cooldownPeriod:  60
+      triggers:
+      - type: prometheus
+        metadata:
+          serverAddress: http://kube-prometheus-kube-prome-prometheus.monitoring.svc.cluster.local:9090/
+          metricName: giropops_senhas_replicas
+          threshold: '3'
+          query: |
+            sum(kube_deployment_status_replicas{namespace="giropops",deployment="giropops-senhas"})
+
+Com essa política, eu estou dizendo que, para cada 3 réplicas do deployment do giropops-senhas, o KEDA deve provisionar 1 deployment do redis. Assim, a minha carga de trabalho irá escalar de maneira que suporte a demanda da aplicação:
+
+![keda-up](./docs/images/keda-working.png)
+
+O contrário também irá acontecer: Assim que o HPA diminuir a necessidade de pods do nosso Deployment giropops-senhas, o KEDA também irá diminuir a quantidade de réplicas do redis-deployment:
+
+![keda-down](./docs/images/keda-scaledown.png)
+
+Agora sim, podemos rodar nosso Stress Test!
+
+### Stress Test com Locust
+O Locust é uma ferramenta OpenSource que permite executarmos carga de estresse em nossa aplicação. Com ela, conseguimos inclusive, criar scripts python para definir em quais paths queremos bater e o que queremos realizar dentro da aplicação
+Você pode ver como o meu Locust está provisionado nos manifestos [dessa pasta](./manifests/locust)
+Basicamente eu estou gerando 2 testes:
+
+ - Ficar gerando senhas na API a partir da rota `/api/gerar-senha`
+ - Ficar consultando as senhas através da rota `/api/senhas`
+
+Através da interface web, vou fazer o Locust bater diretamente no Service do Giropops-Senhas. Como os dois serviços estão dentro do Cluster, farei isso pelo DNS interno para que eu não tenha problemas de carga na minha máquina ou ALB:
+
+![locust-test](./docs/images/locust-test.png)
+
+E após executar os testes, estes foram os resultados que eu obtive:
+O meu HPA escalou conforme esperado, assim com o KEDA:
+![keda-hpa](./docs/images/get-top.png)
+
+Grande parte das requisições passaram, mas após uma certa carga, a minha página /api/gerar-senha começou a retornar "Internal Server Error", mesmo a senha continuando a ser gerada
+
+![statics](./docs/images/locust-statics.png)
+
+![enter image description here](./docs/images/locust-charts.png)
+
+Olhando no Grafana:
+
+![grafana1](./docs/images/locust-grafana1.png)
+
+![grafana2](./docs/images/locust-grafana2.png)
+
+##
+Com isso eu encerro a entrega do meu projeto do desafio e fico à disposição caso alguém queira entender melhor algum dos pontos que eu passei aqui, e também ficarei muito feliz caso possam contribuir me explicando coisas que eu esteja fazendo de maneira errada e qual seria a melhor alternativa.
+Entrem em contato através do meu Telegram ou LinkedIn:
+
+<a href="https://www.linkedin.com/in/fabiobartoli/"><img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"></a>
+<a href="https://t.me/FabioBartoli"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram"></a>
+
+
+##
+Esse projeto foi desenvolvido como parte do PICK - Programa Intensivo de Containers e Kubernetes - Turma 2024. [Saiba mais sobre](https://linuxtips.io/pick-2024/)

@@ -19,6 +19,7 @@ spec:
         - kube-system
         - kyverno
         - monitoring
+        - locust
         - keda
     validate:
       message: "Utilize imagens do Registry Harbor!"

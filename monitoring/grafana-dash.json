@@ -55,7 +55,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "172.31.114.211:9100"
+              "options": "172.31.126.30:9100"
             },
             "properties": [
               {
@@ -67,7 +67,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "172.31.126.118:9100"
+              "options": "172.31.118.74:9100"
             },
             "properties": [
               {
@@ -79,7 +79,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "172.31.119.90:9100"
+              "options": "172.31.116.95:9100"
             },
             "properties": [
               {
@@ -91,7 +91,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "172.31.122.134:9100"
+              "options": "172.31.124.213:9100"
             },
             "properties": [
               {
@@ -163,6 +163,10 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
@@ -175,13 +179,14 @@
         "x": 12,
         "y": 0
       },
-      "id": 3,
+      "id": 9,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
         "orientation": "auto",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -189,9 +194,9 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
       },
       "pluginVersion": "11.1.4",
       "targets": [
@@ -202,7 +207,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum by(pod) (redis_connection_errors_total{service=\"giropops-senhas\"})",
+          "expr": "sum by(namespace) (node_namespace_pod:kube_pod_info:)",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -212,8 +217,8 @@
           "useBackend": false
         }
       ],
-      "title": "Erros de Conexão com o Redis",
-      "type": "stat"
+      "title": "Pods por Namespace",
+      "type": "bargauge"
     },
     {
       "datasource": {
@@ -240,7 +245,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 7,
+        "w": 6,
         "x": 0,
         "y": 5
       },
@@ -309,8 +314,8 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 7,
-        "x": 7,
+        "w": 6,
+        "x": 6,
         "y": 5
       },
       "id": 6,
@@ -340,7 +345,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum by(pod) (senha_gerada_numeros_total)",
+          "expr": "sum by(pod) (senha_gerada_numeros_total{service=\"giropops-senhas\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -377,12 +382,12 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 12,
-        "w": 10,
-        "x": 14,
+        "h": 6,
+        "w": 12,
+        "x": 12,
         "y": 5
       },
-      "id": 9,
+      "id": 3,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -409,7 +414,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum by(pod) (senha_gerada_total)",
+          "expr": "sum by(pod) (redis_connection_errors_total{service=\"giropops-senhas\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -419,7 +424,7 @@
           "useBackend": false
         }
       ],
-      "title": "Senhas Geradas TOTAL",
+      "title": "Erros de Conexão com o Redis",
       "type": "stat"
     },
     {
@@ -447,7 +452,7 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 7,
+        "w": 6,
         "x": 0,
         "y": 11
       },
@@ -516,8 +521,8 @@
       },
       "gridPos": {
         "h": 6,
-        "w": 7,
-        "x": 7,
+        "w": 6,
+        "x": 6,
         "y": 11
       },
       "id": 8,
@@ -547,7 +552,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum by(pod) (senha_gerada_sem_numeros_total)",
+          "expr": "sum by(pod) (senha_gerada_sem_numeros_total{container=\"giropops-senhas\"})",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -559,6 +564,231 @@
       ],
       "title": "Senhas Geradas SEM NÚMEROS",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "sum by(container) (senha_gerada_total)",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Senhas Geradas no TOTAL",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "alertmanager",
+                  "config-reloader",
+                  "controller",
+                  "core",
+                  "coredns",
+                  "database",
+                  "etcd",
+                  "giropops-senhas",
+                  "grafana",
+                  "grafana-sc-dashboard",
+                  "grafana-sc-datasources",
+                  "haproxy",
+                  "jobservice",
+                  "keda-admission-webhooks",
+                  "keda-operator",
+                  "keda-operator-metrics-apiserver",
+                  "kube-apiserver",
+                  "kube-controller-manager",
+                  "kube-prometheus-stack",
+                  "kube-proxy",
+                  "kube-scheduler",
+                  "kube-state-metrics",
+                  "kyverno",
+                  "locust-giropops",
+                  "metrics-server",
+                  "nginx",
+                  "node-exporter",
+                  "portal",
+                  "prometheus",
+                  "redis",
+                  "registry",
+                  "registryctl",
+                  "trivy",
+                  "weave",
+                  "weave-npc"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.1.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "sum by(container) (container_memory_usage_bytes)",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Uso de Memória por POD",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -623,7 +853,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 26
       },
       "id": 4,
       "options": {
@@ -661,20 +891,20 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "1m",
+  "refresh": "30s",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Giropops-Senhas",
   "uid": "fdw1pn87u5kaoc",
-  "version": 2,
+  "version": 6,
   "weekStart": ""
 }
