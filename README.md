@@ -14,10 +14,10 @@ A aplicação **Giropops Senhas** é uma ferramenta desenvolvida pela LinuxTips 
  - [Criando Deploys com o Helm](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#criando-deploys-com-o-helm)
  - [Garantindo a segurança com Kyverno](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#garantindo-a-seguran%C3%A7a-com-kyverno)
  - [Utilizando o Harbor para garantir imagens seguras](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#utilizando-o-harbor-para-garantir-imagens-seguras)
- - Monitorando nossa Aplicação
- - Hora de Estressar!
-	 - Conhecendo o Kubernetes-based Event Driven Autoscaling - KEDA
-	 - Stress Test com Locust
+ - [Monitorando nossa Aplicação](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#monitorando-nossa-aplica%C3%A7%C3%A3o)
+ - [Hora de Estressar!](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#hora-de-estressar)
+	 - [Conhecendo o Kubernetes-based Event Driven Autoscaling - KEDA](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#conhecendo-o-kubernetes-based-event-driven-autoscaling---keda)
+	 - [Stress Test com Locust](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#stress-test-com-locust)
 
 Para resolver esse desafio, eu utilizei as seguintes ferramentas/ tecnologias:
 ### Stack de Ferramentas/ Tecnologias:
