@@ -1,16 +1,21 @@
 ## Resolução Desafio - PICK 2024_01
+
 Este repositório contém a minha resolução do [desafio proposto](https://github.com/badtuxx/LINUXtips-PICK-24_01) pelo [@Badtuxx](https://github.com/badtuxx) para a Turma do PICK 2024.
 A ideia principal do desafio é realizar a criação de um ambiente Kubernetes gerenciado e totalmente seguro para executar de maneira eficaz a aplicação **Giropops Senhas**
 A aplicação **Giropops Senhas** é uma ferramenta desenvolvida pela LinuxTips durante live na Twitch para ajudar os usuários a criar senhas fortes e seguras de forma rápida e personalizada. Ela permite que você gere senhas aleatórias, escolhendo o tamanho das senhas, e se fará a inclusão de caracteres especiais e/ou números.
 ## Sumário desta Doc:
 
- - Stack de Ferramentas
- - Criação da Infraestrutura
- - Diferentes formas para se criar uma imagem
- - Criando Deploys com Helm
+ - [Stack de Ferramentas](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#stack-de-ferramentas-tecnologias)
+ - [Criação da Infraestrutura](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#stack-de-ferramentas-tecnologias)
+ - [Diferentes formas para se criar uma imagem](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#diferentes-formas-para-se-criar-uma-imagem)
+	 - [Primeiro Método: O build convencional](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#primeiro-m%C3%A9todo-o-build-convencional) 
+	 - [Segundo Método: Build utilizando Imagens Distroless](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#segundo-m%C3%A9todo-build-utilizando-imagens-distroless)
+	 - [Terceiro Método: Vamos criar uma imagem do zero?](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#terceiro-m%C3%A9todo-vamos-criar-uma-imagem-do-zero)
+ - Criando Deploys com o Helm
  - Garantindo a segurança com Kyverno
  - Utilizando o Harbor para garantir imagens seguras
  - Monitorando nossa Aplicação
+ - Hora de Estressar!
 
 Para resolver esse desafio, eu utilizei as seguintes ferramentas/ tecnologias:
 ### Stack de Ferramentas/ Tecnologias:
@@ -35,6 +40,7 @@ Eu me baseei em outro projeto que desenvolvi ainda durante o PICK2024 para a cri
 Mas, para esse desafio, as coisas são um pouco diferentes e, apesar de utilizar o mesmo "esqueleto" do Terraform, tive que fazer várias alterações para que o cluster criado suporte tudo que eu utilizarei, inclusive sendo necessário utilizar máquinas fora do free tier para que atendam aos requisitos mínimos do Kubernetes. 
 Eu também adicionei em meu Terraform o provisionamento de um Application LoadBalancer e de registros DNS na minha Hosted Zone para apontarem para este LoadBalancer que estarei criando. Aqui, eu tentei "contornar" a utilização do EKS + Network Load Balancer, 2 recursos que possuem custos e não estão inclusos no free tier, pela utilização de instâncias EC2 gerenciadas pelo Kubeadm com um Application Load Balancer, que possui um período de 750 horas/ mês para utilização no Free Tier.
 Em resumo, o cenário que eu quis montar foi para pagar o menos possível, em comparativo:
+
 | Stack "Normal" - EKS + Instâncias + NLB             | Preço            | Stack "Manual", EC2 + ALB     | Preço                                  |
 |-----------------------------------------------------|------------------|------------------------------------------------|----------------------------------------|
 | EKS                                                 | $0,10/hora        | 4 Instâncias (1 CP + 3 Workers) - t3a.small     | (0,0188) * 4 = $0,0752/hora             |
@@ -65,7 +71,7 @@ Para fazer o deploy da minha infra, eu tenho um [Pipeline CI/CD diretamente no m
 Infra criada, vamos ver um pouco sobre a criação da Imagem
 ### Diferentes formas para se criar uma Imagem
 A criação de um Dockerfile é uma prática bastante comum quando pensamos em colocar nossas aplicações para serem executadas em ambientes com orquestração. Temos diversas maneiras de gerar uma imagem como o próprio [Docker](https://www.docker.com/) que acabei de citar, o [Podman](https://podman.io/), e até mesmo a criação das nossas imagens "do zero". Nesse desafio, eu tenho 3 repositórios com a exata mesma aplicação onde eu irei aplicar técnicas de build da imagem diferente, para que possamos comparar os benefícios de cada uma.
-#### Primeiro método: O build convencional
+#### Primeiro Método: O build convencional
 [Nessa pasta](./app/normal-giropops-senhas), você vai encontrar o build mais convencional que costumamos fazer: pega uma imagem base, instalamos o que for necessário, definimos o entrypoint da nossa aplicação e sucesso! É uma forma válida de se fazer um deploy, mas vamos olhar para alguns dados:
 
 ![build-normal](./docs/images/build-normal.png)
@@ -80,7 +86,7 @@ Perceba que o grande problema aqui é que, caso essa nossa imagem sofra um vazam
 
 Então, temos 105 vulnerabiliadades encontradas, incluindo **1 CRÍTICA**, e dessas 105, apenas 1 possui um fix disponível, fix que com certeza será ou já foi lançado em uma imagem mais recente do python no DockerHub, mas mesmo assim ainda temos bastante coisa. Então, vamos olhar para o segundo cenário
 
-#### Segundo método: Build utilizando Imagens Distroless
+#### Segundo Método: Build utilizando Imagens Distroless
 Aqui, a ideia é ter imagens que tem apenas os pacotes necessários para rodar nossa aplicação, então, toda a parte dos pacotes do Sistema Operacional e etc que já discutimos antes já não são mais um problema pra gente. Com as imagens Distroless conseguimos ter mais confiabilidade nas nossas imagens criadas. Você pode [verificar aqui](./app/distroless-giropops-senhas/Dockerfile) como utilizei o distroless para criar o Dockerfile do giropops-senhas. Em resumo, utilizamos uma imagem base "builder" com um sistema operacional para fazer todo o processo de build da nossa aplicação e depois copiamos apenas os executáveis necessários para uma imagem do tipo [APKO](https://edu.chainguard.dev/open-source/build-tools/apko/getting-started-with-apko/) usando o conceito de [Docker Multi-Stage](https://docs.docker.com/build/building/multi-stage/)
 Agora, vamos verificar como ficou nossa imagem:
 
@@ -120,3 +126,192 @@ Nossa imagem tem APENAS UMA CAMADA apko. O que significa que todo nosso processo
 
 Também não temos vulnerabilidades. Para o restante deste desafio, eu irei trabalhar com a imagem do giropops-senhas criada via Melange
 ##
+### Criando Deploys com o Helm
+O Helm é um gerenciador de pacotes desenvolvido para facilitar o provisionamento de aplicações no Kubernetes. Assim como em um sistema operacional nós temos os gerenciadores, como por exemplo o "apt", o Helm tem quase a mesma função para o Kubernetes. Aqui, a ideia é que consigamos aplicar a mesma exata configuração para diferentes ambientes, alterando somente o que for necessário através do "values"
+Durate esse laboratório, eu instalei os seguintes pacotes Helm:
+
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm repo add harbor https://helm.goharbor.io
+    helm repo add kyverno https://kyverno.github.io/kyverno/
+    helm repo add kedacore https://kedacore.github.io/charts
+
+Todos esses pacotes são criados pelos próprios mantenedores das aplicações ou pela comunidade, com o intuíto de tornar essas ferramentas fáceis de serem "instaladas" dentro do seu cluster. Mas também podemos criar os próprios pacotes para a nossa aplicação.
+No meu caso, tenho duas stacks que podem tirar bom proveito dessa configuração compartilhada: os Ingress que eu irei criar para cada endpoint que ficará acessível, conforme eu demonstrei na [imagem](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#cria%C3%A7%C3%A3o-da-infraestrutura) acima, e também o giropops-senhas, que é composto por Aplicação + Redis.
+Os dois Helms estão publicados aqui neste repositório mesmo e você pode conferir nos seguintes links:
+[Helm Chart do Giropops-App](https://github.com/FabioBartoli/LINUXtips-PICK/tree/main/manifests/helm/giropops-app)
+[Helm Chart do Ingress](https://github.com/FabioBartoli/LINUXtips-PICK/tree/main/manifests/helm/ingress)
+A estrutura do meu Helm é basicamente a seguinte:
+
+![estrutura-helm](./docs/images/estrutura-helm.png)
+
+ - Chart.yaml - Definição de versão do Helm, aplicação, descrição e etc
+ - Pasta "templates" - Onde ficam os arquivos que serão consumidos para a criação dos meus recursos
+ - values.yaml: definição dos valores que serão inclusos em cada um dos recursos criados
+
+Para fazer a instalação do Helm criado no meu Cluster, executei os seguintes comandos:
+
+    ## Incluir os repos:
+    helm repo add ingress https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/ingress/
+    helm repo add giropops-app https://fabiobartoli.github.io/LINUXtips-PICK/manifests/helm/giropops-app/
+    # Helm Update:
+    helm repo update
+    # Instalar os pacotes:
+    helm  install  ingress-controller  ingress/ingress-templates
+    helm install giropops giropops-app/giropops-chart
+
+No giropops-senhas, para simular uma instalação multi-ambiente, eu coloquei uma label chamada "env" que pode ser passada diretamente no comando de instalação do Helm. Se nada for passado, ela subirá como "dev". Se eu passar algum parâmetro, irá respeitar o que eu passei. Se eu subir com a env "stg", consigo verificar que ela realmente está aqui:
+
+![set-env](./docs/images/set-env.png)
+
+Na prática, isso poderia ser utilizado em diversos campos dentro do meu template do Helm, como para definição de quantidade de recursos alocados a depender do ambiente, por exemplo.
+Mas antes de fazer o deploy da aplicação, precisamos configurar mais algumas coisas.
+
+### Garantindo a segurança com Kyverno
+O Kyverno é uma ferramenta que nos permite criar PolicyAsCode no nosso cluster Kubernetes. Com ela, conseguimos criar políticas declarativas para definir o que pode e o que não pode ser feito em nosso cluster. Podemos criar regras para o cluster como um todo "ClusterPolicy" ou apenas para um namespace específico "Policy". Na [documentação oficial](https://kyverno.io/docs/) do Kyverno, você pode ver diversos exemplos de políticas que são aplicáveis no cluster
+No meu cenário, eu criei as seguintes políticas:
+
+ - [disallow-root-user.yaml](./security/kyverno/disallow-root-user.yaml) - Não permite que nenhum container criado execute como o usuário root do container, com exceção dos containers criados nos namespaces das ferramentas que irei utilizar (kyverno, ingress-nginx, prometheus, por exemplo)
+ - [disalow-default-ns.yaml](./security/kyverno/disalow-default-ns.yaml) - Não permite que nenhum container suba utilizando o namespace default do cluster, sem exceções
+ - [allow-only-harbor-registry.yaml](./security/kyverno/allow-only-harbor-registry.yaml) - Permite que eu utilize apenas imagens que venham do meu registry Harbor
+ - [harbor-signature.yaml](./security/kyverno/harbor-signature.yaml) - Além de permitir apenas do meu registry privado com a regra acima, essa verifica se a imagem foi assinada pelo Cosign utilizando uma chave válida
+ - [require-probes.yaml](./security/kyverno/require-probes.yaml) - Não permite que nenhum container suba sem as probes definidas, com exceção dos containers criados nos namespaces das ferramentas que irei utilizar
+ - [verify-sensitive-vars.yaml](./security/kyverno/verify-sensitive-vars.yaml) - Não permite que secrets sejam montadas como env dentro dos containers
+
+Agora vamos testar essas políticas:
+Primeiro, vou criar uma secret genérica apenas para fazer o teste de passá-la como variável:
+
+    kubectl create secret generic minha-secret --from-literal=strigus=girus
+
+E vamos criar um deploy totalmente genérico que tenta montar essa secret:
+
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: nginx-deployment
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:latest
+            env:
+            - name: MINHA_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: minha-secret
+                  key: chave
+            ports:
+            - containerPort: 80
+
+O resultado:
+
+![kyverno-bloqueios](./docs/images/kyverno-bloqueios.png)
+
+Já de cara, fomos bloqueados por 5 políticas diferentes, pois nosso deployment não está nos padrões permitidos para o cluster. Vamos ajustar as 5 políticas para verificar se dará tudo certo:
+
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: nginx-deployment
+      namespace: deploy-inseguro
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: nginx
+      template:
+        metadata:
+          labels:
+            app: nginx
+        spec:
+          containers:
+          - name: nginx
+            image: harbor.fabiobartoli.com.br/pick2024/nginx-assinada
+            ports:
+            - containerPort: 80
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+              allowPrivilegeEscalation: false
+            livenessProbe:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 10
+              periodSeconds: 10
+            readinessProbe:
+              httpGet:
+                path: /
+                port: 80
+              initialDelaySeconds: 5
+              periodSeconds: 5
+          imagePullSecrets:
+            - name: regcred
+
+
+Perceba que eu estou passando agora uma imagem que realmente está disponível no meu registry privado, passando minha credencial para logar no registry privado e, ainda mais, está sim assinada:
+
+![nginx-assinada](./docs/images/nginx-assinada.png)
+
+Só tem um problema... Eu assinei essa imagem com uma chave falsa! Uma chave que não possui relação de confiança com minha chave pública cadastrada na política "require-harbor-signature". Vamos ver se seremos identificados:
+
+![false-sig](./docs/images/false-signature.png)
+
+E sim, todas nosssas políticas estão funcionando maravilhosamente bem! Apenas pra não deixar passar, vou ajustar a assinatura dessa imagem e tentar realizar a criação do deployment novamente:
+
+![image-adjust](./docs/images/imagem-ajustada.png)
+
+Nossas roles estão funcionando bem, então agora podemos finalmente fazer o deployment do Giropops-Senhas em si
+
+### Utilizando o Harbor para garantir imagens seguras
+Como já disse anteriormente, nessa stack que criei eu utilizei o Harbor como ferramenta para repositórios privados. O Harbor não estava incluso nos requisitos para o desafio, mas é uma ferramenta muito útil que me foi apresentada no PISC pelo professor [P0ssuidao](https://github.com/P0ssuidao) e que eu já estou utilizando no meu dia a dia.
+Basicamente, o Harbor serve para armazenarmos nossas imagens de container, mas possui muitas outras funções que já facilitam demais a garantia de segurança nas imagens. Para esse desafio, eu configurei no Harbor os seguintes parâmetros:
+ - Todas as imagens que eu faço push para o Harbor são automaticamente scanneadas pelo Trivy da Aquasecurity e o relatório fica disponível para mim
+ - Qualquer imagem que estiver disponível no Harbor, só poderá ser utilizada por alguém com acesso, se ela não tiver NENHUMA vulnerabilidade dos níveis "LOW" para cima
+ - Qualquer imagem que estiver disponível no Harbor, só poderá ser utilizada por alguém com acesso, se ela estiver assinada utilizando o Cosign. Essa configuração junto com a configuração de verificação da assinatura me fazem ter confiabilidade que minha imagem final é realmente a que eu construi, e não uma modificada.
+Abaixo está o print das minhas configurações:
+
+![harbor-configs](./docs/images/harbor-configs.png)
+
+Com isso, tenho a garantia que minhas imagens da aplicação sempre estarão assinadas pelo **Cosign** e terão suas vulnerabilidades scanneadas pelo **Trivy**. Vamos partir para o deploy da imagem então.
+Eu criei um pipeline CI/CD que é responsável pelo [build da imagem](./.github/workflows/build-image.yml) utilizando o Melange + APKO + Cosign + Harbor. Então, a ideia é que o desenvolvedor faça as alterações na sua aplicação que está dentro da pasta [app/melange-giropops-senhas](./app/melange-giropops-senhas), faça o commit para a branch desejada e rode a esteira de build para a construção da imagem no Harbor. O meu pipeline será responsável por:
+
+ - Definir o ambiente baseado na branch: Para que possamos ter imagens
+   de dev, stg e prd, o pipeline definirá o ambiente baseado na seguinte
+   lógica: 
+	 - Rodou o pipeline na branch "master", será buildada a imagem de produção (prd)
+	 - Rodou o pipeline na branch "staging", será buildada a imagem de homologação/qa (stg)
+	 - Rodou o pipeline em qualquer outra branch, será buildada a imagem de desenvolvimento (dev)
+ - Montar as chaves para assinatura do Melange e do Cosign: Eu salvei como secrets em base64 no meu Github as chaves para montar a imagem do Melange e também para assinar a imagem final utilizando o Cosign. Essas são as secrets configuradas:
+ 
+ ![melange-keys](./docs/images/melange-keys.png)
+ 
+ - Realizar o processo de build do pacote com o Melange e build da imagem final via APKO: Para esse processo, eu estou utilizando containers com as imagens do Melange e do APKO por uma questão de facilidade, mas eu poderia instalar esses pacotes no meu runner do Github Actions se assim preferisse
+ - Fazer o "docker login" no Harbor e a instalação do Cosign para assinatura da imagem
+ - Realizar o tagueamento da imagem buildada, subir para o Harbor e fazer a assinatura dela
+	 - Nesse step, eu tenho uma condicional para taguear a imagem como "latest" apenas se o build estiver sendo executado a partir da branch master, ou seja, o build produtivo
+
+Agora sim, depois de executar o build e ter a imagem disponível no Harbor, podemos executar o Helm do nosso giropops-senhas! Manualmente eu também subi uma imagem do Redis disponibilizada pela Chainguard e fiz a assinatura dela. Podemos conferir os dados no nosso registry:
+
+**giropops-senhas:**
+
+![giropops-image](./docs/images/giropops-image.png)
+
+**redis:**
+
+![redis-image](./docs/images/redis-image.png)
+
+Instalando o nosso Helm:
+
+![enter image description here](./docs/images/helm-install-giropops.png)
+   
+E por fim, acessando nosso ambiente, com certificado seguro:
+
+ ![acesso-giropops](./docs/images/acesso-giropops.png)

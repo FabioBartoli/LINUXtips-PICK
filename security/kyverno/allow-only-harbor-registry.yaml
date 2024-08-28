@@ -1,5 +1,5 @@
 apiVersion: kyverno.io/v1
-kind: Policy
+kind: ClusterPolicy
 metadata:
   name: ensure-images-from-trusted-registry
   namespace: giropops
@@ -11,6 +11,15 @@ spec:
       resources:
         kinds:
         - Pod
+    exclude:
+      resources:
+        namespaces:
+        - harbor
+        - ingress-nginx
+        - kube-system
+        - kyverno
+        - monitoring
+        - keda
     validate:
       message: "Utilize imagens do Registry Harbor!"
       pattern:
