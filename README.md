@@ -1,3 +1,5 @@
+**Assista meu vídeo sobre a resolução do desafio:** https://www.youtube.com/watch?v=ab2jqOS3ufc
+
 ## Resolução Desafio - PICK 2024_01
 
 Este repositório contém a minha resolução do [desafio proposto](https://github.com/badtuxx/LINUXtips-PICK-24_01) pelo [@Badtuxx](https://github.com/badtuxx) para a Turma do PICK 2024.
