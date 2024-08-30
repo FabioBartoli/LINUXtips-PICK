@@ -132,14 +132,14 @@ Também não temos vulnerabilidades. Para o restante deste desafio, eu irei trab
 ##
 ### Criando Deploys com o Helm
 O Helm é um gerenciador de pacotes desenvolvido para facilitar o provisionamento de aplicações no Kubernetes. Assim como em um sistema operacional nós temos os gerenciadores, como por exemplo o "apt", o Helm tem quase a mesma função para o Kubernetes. Aqui, a ideia é que consigamos aplicar a mesma exata configuração para diferentes ambientes, alterando somente o que for necessário através do "values"
-Durate esse laboratório, eu instalei os seguintes pacotes Helm:
+Durante esse laboratório, eu instalei os seguintes pacotes Helm:
 
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm repo add harbor https://helm.goharbor.io
     helm repo add kyverno https://kyverno.github.io/kyverno/
     helm repo add kedacore https://kedacore.github.io/charts
 
-Todos esses pacotes são criados pelos próprios mantenedores das aplicações ou pela comunidade, com o intuíto de tornar essas ferramentas fáceis de serem "instaladas" dentro do seu cluster. Mas também podemos criar os próprios pacotes para a nossa aplicação.
+Todos esses pacotes são criados pelos próprios mantenedores das aplicações ou pela comunidade, com o intuito de tornar essas ferramentas fáceis de serem "instaladas" dentro do seu cluster. Mas também podemos criar os próprios pacotes para a nossa aplicação.
 No meu caso, tenho duas stacks que podem tirar bom proveito dessa configuração compartilhada: os Ingress que eu irei criar para cada endpoint que ficará acessível, conforme eu demonstrei na [imagem](https://github.com/FabioBartoli/LINUXtips-PICK?tab=readme-ov-file#cria%C3%A7%C3%A3o-da-infraestrutura) acima, e também o giropops-senhas, que é composto por Aplicação + Redis.
 Os dois Helms estão publicados aqui neste repositório mesmo e você pode conferir nos seguintes links:
 [Helm Chart do Giropops-App](https://github.com/FabioBartoli/LINUXtips-PICK/tree/main/manifests/helm/giropops-app)
