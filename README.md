@@ -1,4 +1,4 @@
-**Assista meu vídeo sobre a resolução do desafio:** https://www.youtube.com/watch?v=ab2jqOS3ufc
+**Assista meu vídeo sobre a resolução do desafio:** https://www.youtube.com/watch?v=osf6MJqHQIQ
 
 ## Resolução Desafio - PICK 2024_01
 
